@@ -1,5 +1,7 @@
 import { useRef, useState } from 'react';
+import { AlertaQualidade } from '../components/AlertaQualidade';
 import { getConfig } from '../config';
+import type { Foto } from '../db/schema';
 import { useDadosVistoria } from '../hooks/useDadosVistoria';
 import { mensagemErro } from '../lib/erros';
 import { salvarArquivos } from '../lib/fotos';
@@ -27,12 +29,18 @@ export function Checklist({ v }: PropsAba) {
   const [salvando, setSalvando] = useState('');
   const input = useRef<HTMLInputElement>(null);
   const alvo = useRef<ResumoItem | null>(null);
+  const [ultimo, setUltimo] = useState(-1);
+  const [comAlerta, setComAlerta] = useState<Foto | null>(null);
 
   const resumo = resumoItens(cfg, 'C', v.campos, slots, fotos);
   const feitos = resumo.filter((r) => r.completo).length;
   const visiveis = soPendentes ? resumo.filter((r) => !r.completo) : resumo;
+  // Próximo incompleto depois do último item usado (volta ao início se preciso).
+  const proximo = [...resumo.slice(ultimo + 1), ...resumo.slice(0, ultimo + 1)].find((r) => !r.completo);
 
   const tocar = (r: ResumoItem) => {
+    setUltimo(resumo.indexOf(r));
+    setComAlerta(null);
     if (precisaDetalhe(r)) return ir(`/v/${v.id}/item/${r.ik}`);
     alvo.current = r;
     input.current?.click();
@@ -45,8 +53,10 @@ export function Checklist({ v }: PropsAba) {
     if (!arqs.length || !r) return;
     try {
       setSalvando(`Salvando foto do item ${pad(r.item.num, 2)}…`);
-      await salvarArquivos(v, r.slots[0].key, arqs);
-      toast(`Foto salva: ${pad(r.item.num, 2)} ${r.item.titulo}`);
+      const salvas = await salvarArquivos(v, r.slots[0].key, arqs);
+      const ruim = salvas.filter((f) => f.alerta);
+      setComAlerta(ruim[ruim.length - 1] ?? null);
+      if (!ruim.length) toast(`Foto salva: ${pad(r.item.num, 2)} ${r.item.titulo}`);
     } catch (err) {
       toast(mensagemErro(err));
     } finally {
@@ -74,6 +84,16 @@ export function Checklist({ v }: PropsAba) {
         </label>
       </div>
       {salvando && <div className="aviso">{salvando}</div>}
+      {comAlerta && (
+        <AlertaQualidade
+          v={v}
+          foto={comAlerta}
+          onResolvido={(nova) => {
+            setComAlerta(nova);
+            recarregar();
+          }}
+        />
+      )}
       <p className="pequeno claro">Toque no item para fotografar. “›” abre detalhes (várias fotos, não tem, outro).</p>
       {!carregado && <p>Carregando…</p>}
       <ul className="lista-itens">
@@ -102,6 +122,14 @@ export function Checklist({ v }: PropsAba) {
         })}
       </ul>
       {soPendentes && visiveis.length === 0 && <p className="vazio">Tudo completo 🎉</p>}
+      {proximo && !salvando && (
+        <button type="button" className="barra-proximo" onClick={() => tocar(proximo)}>
+          <span className="pequeno">Próximo pendente</span>
+          <span className="barra-proximo-item">
+            {precisaDetalhe(proximo) ? '›' : '📷'} {pad(proximo.item.num, 2)} {proximo.item.titulo}
+          </span>
+        </button>
+      )}
     </>
   );
 }

@@ -28,7 +28,8 @@ export async function obterVistoria(id: string): Promise<Vistoria | undefined> {
 export async function criarVistoria(tipo: string): Promise<Vistoria> {
   const cfg = getConfig(tipo);
   const campos: Campos = {};
-  for (const g of cfg.registro) for (const c of g.campos) if (c.padrao === 'hoje') campos[c.key] = hojeISO();
+  for (const g of cfg.registro)
+    for (const c of g.campos) if (c.padrao) campos[c.key] = c.padrao === 'hoje' ? hojeISO() : c.padrao;
   const agora = Date.now();
   const v: Vistoria = { id: novoId(), tipo: cfg.tipo, campos, createdAt: agora, updatedAt: agora };
   await (await getDB()).put('vistorias', v);
@@ -127,6 +128,9 @@ export async function adicionarFoto(
     itemId: dados.itemId,
     nome: dados.nome,
     antena: dados.antena,
+    capturadaEm: dados.capturadaEm ?? agora,
+    gps: dados.gps,
+    alerta: dados.alerta,
     ordem: agora + Math.random(),
     createdAt: agora,
     thumb,

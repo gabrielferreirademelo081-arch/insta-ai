@@ -6,6 +6,7 @@ import { mensagemErro } from '../lib/erros';
 import { salvarArquivos } from '../lib/fotos';
 import { ROTULO_STATUS, statusSlot } from '../lib/slots';
 import { toast } from '../lib/toast';
+import { AlertaQualidade } from './AlertaQualidade';
 import { CapturaBotoes } from './CapturaBotoes';
 import { FotoGrid } from './FotoGrid';
 
@@ -28,6 +29,7 @@ export function SlotSecao(p: Props) {
   const [estado, setEstado] = useState<EstadoSlot | null>(slot?.estado ?? null);
   const [just, setJust] = useState(slot?.justificativa ?? '');
   const [ocupado, setOcupado] = useState('');
+  const [comAlerta, setComAlerta] = useState<Foto | null>(null);
   const { agendar, flush } = useAutosave<{ e: EstadoSlot | null; j: string }>((x) =>
     salvarSlot(v.id, slotKey, x.e, x.j).then(p.onAlterado),
   );
@@ -52,10 +54,12 @@ export function SlotSecao(p: Props) {
 
   const aoFotografar = async (arqs: File[]) => {
     try {
-      const n = await salvarArquivos(v, slotKey, arqs, p.antenaPadrao, (i, t) =>
+      const salvas = await salvarArquivos(v, slotKey, arqs, p.antenaPadrao, (i, t) =>
         setOcupado(t > 1 ? `Salvando ${i}/${t}…` : 'Salvando…'),
       );
-      toast(n > 1 ? `${n} fotos salvas` : 'Foto salva');
+      const ruim = salvas.filter((f) => f.alerta);
+      setComAlerta(ruim[ruim.length - 1] ?? null);
+      if (!ruim.length) toast(salvas.length > 1 ? `${salvas.length} fotos salvas` : 'Foto salva');
     } catch (e) {
       toast(mensagemErro(e));
     } finally {
@@ -136,6 +140,16 @@ export function SlotSecao(p: Props) {
       {mostrarFotos && (
         <>
           <FotoGrid fotos={fotos} vinculaAntena={p.vinculaAntena} onAlterado={p.onAlterado} />
+          {comAlerta && (
+            <AlertaQualidade
+              v={v}
+              foto={comAlerta}
+              onResolvido={(nova) => {
+                setComAlerta(nova);
+                p.onAlterado();
+              }}
+            />
+          )}
           <CapturaBotoes onArquivos={aoFotografar} ocupado={!!ocupado} />
           {ocupado && <p className="pequeno">{ocupado}</p>}
         </>

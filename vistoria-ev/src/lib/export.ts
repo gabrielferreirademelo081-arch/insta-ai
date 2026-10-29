@@ -3,6 +3,8 @@ import { getConfig } from '../config';
 import type { CampoDef, TipoConfig } from '../config/types';
 import { listarAntenas, listarFotos, listarSlots, marcarExportada, obterDadosFoto } from '../db/repo';
 import type { Antena, Foto, SlotChecklist, Vistoria } from '../db/schema';
+import { avisosAntena, errosRegistro } from './validacao';
+import { formatarDataHora } from './fotos';
 import { mesmaAntena, nomeFoto, pad, prefixo, rotuloAntena } from './naming';
 import {
   contarFotos,
@@ -37,6 +39,8 @@ export interface Pendencias {
   patologias: string[];
   pranchas: string[];
   antenas: string[];
+  /** Valores fora do formato/faixa esperados. */
+  valores: string[];
   total: number;
 }
 
@@ -84,13 +88,24 @@ export function calcularPendencias(d: DadosVistoria): Pendencias {
     else vistos.add(rotuloAntena(num));
   });
 
+  const valores = [...errosRegistro(cfg, v.campos)];
+  d.antenas.forEach((a, i) => {
+    const avisos = avisosAntena(cfg, a.campos, v.campos);
+    for (const [k, msg] of Object.entries(avisos)) {
+      const label = cfg.antena.find((c) => c.key === k)?.label ?? k;
+      valores.push(`Antena ${a.campos.numero || `(linha ${i + 1})`} — ${label}: ${msg}`);
+    }
+  });
+
   return {
     registro,
     checklist,
     patologias,
     pranchas,
     antenas,
-    total: registro.length + checklist.length + patologias.length + pranchas.length + antenas.length,
+    valores,
+    total:
+      registro.length + checklist.length + patologias.length + pranchas.length + antenas.length + valores.length,
   };
 }
 
@@ -221,12 +236,24 @@ export function gerarTxt(d: DadosVistoria, nomes: FotoExport[], pend: Pendencias
     ['Patologias', pend.patologias],
     ['Pranchas', pend.pranchas],
     ['Antenas', pend.antenas],
+    ['Valores a conferir', pend.valores],
   ];
   if (!pend.total) L.push('Nenhuma pendência.');
   for (const [t, lista] of blocos) if (lista.length) L.push('', `${t}:`, ...lista.map((x) => `  - ${x}`));
 
   titulo('ARQUIVOS DE FOTO');
-  for (const x of nomes) L.push(`${x.pasta}/${x.nome}`);
+  L.push('(arquivo | data/hora | GPS do aparelho | alerta de qualidade)');
+  for (const x of nomes)
+    L.push(
+      [
+        `${x.pasta}/${x.nome}`,
+        x.foto.capturadaEm ? formatarDataHora(x.foto.capturadaEm) : '-',
+        x.foto.gps ?? 'sem GPS',
+        x.foto.alerta ? `parece ${x.foto.alerta} (mantida)` : '',
+      ]
+        .filter(Boolean)
+        .join(' | '),
+    );
   L.push('');
   return L.join('\r\n');
 }
@@ -245,6 +272,14 @@ export function gerarCsv(d: DadosVistoria): string {
   return '﻿' + [cab, ...linhas].map((l) => l.map(csvCelula).join(';')).join('\r\n') + '\r\n';
 }
 
+const metaFoto = (x: FotoExport) => ({
+  arquivo: `${x.pasta}/${x.nome}`,
+  antena: x.foto.antena ?? null,
+  capturadaEm: x.foto.capturadaEm ? new Date(x.foto.capturadaEm).toISOString() : null,
+  gps: x.foto.gps ?? null,
+  alertaQualidade: x.foto.alerta ?? null,
+});
+
 export function gerarJson(d: DadosVistoria, nomes: FotoExport[], pend: Pendencias): string {
   const slots = mapaSlots(d.slots);
   const porSlot = new Map<string, FotoExport[]>();
@@ -260,7 +295,7 @@ export function gerarJson(d: DadosVistoria, nomes: FotoExport[], pend: Pendencia
         titulo: tituloSlot(d.cfg, d.v.campos, s.key),
         estado: s.status,
         justificativa: s.slot?.justificativa ?? '',
-        fotos: (porSlot.get(s.key) ?? []).map((x) => ({ arquivo: `${x.pasta}/${x.nome}`, antena: x.foto.antena ?? null })),
+        fotos: (porSlot.get(s.key) ?? []).map(metaFoto),
       })),
     );
   const json = {
@@ -283,7 +318,7 @@ export function gerarJson(d: DadosVistoria, nomes: FotoExport[], pend: Pendencia
         titulo: p.titulo,
         estado: s?.estado === 'ENCONTRADA' ? 'ENCONTRADA' : 'NAO_ENCONTRADA',
         descricao: s?.justificativa ?? '',
-        fotos: (porSlot.get(k) ?? []).map((x) => `${x.pasta}/${x.nome}`),
+        fotos: (porSlot.get(k) ?? []).map(metaFoto),
       };
     }),
     pranchas: itens('PR'),

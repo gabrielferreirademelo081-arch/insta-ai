@@ -86,6 +86,10 @@ export const evConfig: TipoConfig = {
   campoObra: 'obra',
   campoIdSite: 'idSite',
   bloquearExportComPendentes: false,
+  campoCarimbo: 'carimboFotos',
+  limiteAlturaAntena: { campoAntena: 'alturaCentro', campoRegistro: 'alturaEv' },
+  // Brilho médio 0–255 e variância do Laplaciano. Valores iniciais: calibrar em campo.
+  qualidadeFoto: { brilhoMinimo: 45, nitidezMinima: 40 },
   pastaPadrao: 'OUTROS',
 
   registro: [
@@ -103,7 +107,7 @@ export const evConfig: TipoConfig = {
       campos: [
         { key: 'endereco', label: 'Endereço', tipo: 'texto', obrigatorio: true },
         { key: 'bairro', label: 'Bairro', tipo: 'texto' },
-        { key: 'cep', label: 'CEP', tipo: 'texto', placeholder: '00000-000' },
+        { key: 'cep', label: 'CEP', tipo: 'texto', placeholder: '00000-000', formato: 'cep' },
         { key: 'cidadeUf', label: 'Cidade/UF', tipo: 'texto' },
         { key: 'latLong', label: 'Latitude, longitude', tipo: 'geo' },
       ],
@@ -111,8 +115,8 @@ export const evConfig: TipoConfig = {
     {
       titulo: 'Alturas',
       campos: [
-        { key: 'alturaEv', label: 'Altura da EV (m)', tipo: 'numero' },
-        { key: 'alturaEdificacao', label: 'Altura da edificação (m)', tipo: 'numero' },
+        { key: 'alturaEv', label: 'Altura da EV (m)', tipo: 'numero', min: 1, max: 200 },
+        { key: 'alturaEdificacao', label: 'Altura da edificação (m)', tipo: 'numero', min: 0, max: 300 },
       ],
     },
     {
@@ -138,8 +142,8 @@ export const evConfig: TipoConfig = {
           opcoes: ['Torre autoportante', 'Torre estaiada', 'Poste', 'Mastro'],
         },
         { key: 'secaoTipica', label: 'Seção típica', tipo: 'opcoes', opcoes: ['Quadrada', 'Triangular', 'Circular'] },
-        { key: 'largBase', label: 'Largura base da EV (mm)', tipo: 'numero' },
-        { key: 'largTopo', label: 'Largura topo da EV (mm)', tipo: 'numero' },
+        { key: 'largBase', label: 'Largura base da EV (mm)', tipo: 'numero', min: 50, max: 20000 },
+        { key: 'largTopo', label: 'Largura topo da EV (mm)', tipo: 'numero', min: 50, max: 20000 },
         { key: 'largEsteira', label: 'Largura da esteira (mm)', tipo: 'texto', placeholder: 'ex.: 470+560' },
       ],
     },
@@ -174,6 +178,18 @@ export const evConfig: TipoConfig = {
         { key: 'medNextel', label: 'Medidor Nextel (nº)', tipo: 'texto' },
         { key: 'medSky', label: 'Medidor Sky (nº)', tipo: 'texto' },
         { key: 'medOutro', label: 'Medidor outro (operadora e nº)', tipo: 'texto' },
+      ],
+    },
+    {
+      titulo: 'Fotos',
+      campos: [
+        {
+          key: 'carimboFotos',
+          label: 'Carimbar obra, item, data e GPS nas fotos',
+          tipo: 'opcoes',
+          opcoes: ['Sim', 'Não'],
+          padrao: 'Sim',
+        },
       ],
     },
     {
@@ -237,15 +253,15 @@ export const evConfig: TipoConfig = {
     { key: 'tipo', label: 'Tipo de antena', tipo: 'texto', sugestoes: ['RF', 'MW', 'RRU', 'AAU', 'AIR', 'GPS'] },
     { key: 'fabricante', label: 'Fabricante', tipo: 'texto' },
     { key: 'modelo', label: 'Modelo', tipo: 'texto' },
-    { key: 'alturaCentro', label: 'Altura do centro (m)', tipo: 'numero' },
+    { key: 'alturaCentro', label: 'Altura do centro (m)', tipo: 'numero', min: 0, max: 200 },
     { key: 'montante', label: 'Montante', tipo: 'texto' },
     { key: 'face', label: 'Face', tipo: 'texto' },
-    { key: 'azimute', label: 'Azimute (°)', tipo: 'numero' },
-    { key: 'diametro', label: 'Diâmetro (m)', tipo: 'numero' },
-    { key: 'comprimento', label: 'Comprimento (m)', tipo: 'numero' },
-    { key: 'largura', label: 'Largura (m)', tipo: 'numero' },
+    { key: 'azimute', label: 'Azimute (°)', tipo: 'numero', min: 0, max: 360 },
+    { key: 'diametro', label: 'Diâmetro (m)', tipo: 'numero', min: 0, max: 5 },
+    { key: 'comprimento', label: 'Comprimento (m)', tipo: 'numero', min: 0, max: 5 },
+    { key: 'largura', label: 'Largura (m)', tipo: 'numero', min: 0, max: 2 },
     { key: 'caboDiametro', label: 'Cabos ϕ (pol)', tipo: 'texto', sugestoes: ['1/2', '7/8', '1 1/4', '1 5/8'] },
-    { key: 'caboQtd', label: 'Cabos (qtde)', tipo: 'numero' },
+    { key: 'caboQtd', label: 'Cabos (qtde)', tipo: 'numero', min: 0, max: 100 },
   ],
 
   antenaExtras: [

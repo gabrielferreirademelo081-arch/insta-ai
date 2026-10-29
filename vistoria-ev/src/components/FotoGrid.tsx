@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { atualizarFoto, excluirFoto, obterDadosFoto } from '../db/repo';
 import type { Foto } from '../db/schema';
 import { mensagemErro } from '../lib/erros';
-import { liberarThumb, urlThumb } from '../lib/fotos';
+import { formatarDataHora, liberarThumb, urlThumb } from '../lib/fotos';
 import { rotuloAntena } from '../lib/naming';
 import { toast } from '../lib/toast';
 
@@ -23,6 +23,11 @@ export function FotoGrid({ fotos, vinculaAntena, onAlterado }: Props) {
             <img src={urlThumb(f)} alt={`Foto ${i + 1}`} loading="lazy" />
             <span className="thumb-n">{i + 1}</span>
             {f.antena && <span className="thumb-ant">ANT {rotuloAntena(f.antena)}</span>}
+            {f.alerta && (
+              <span className="thumb-alerta" title={f.alerta}>
+                ⚠
+              </span>
+            )}
           </button>
         ))}
       </div>
@@ -82,6 +87,11 @@ function Visualizador({
       <div className="modal-img">{url ? <img src={url} alt="" /> : <p>Carregando…</p>}</div>
       <div className="modal-barra">
         <p className="mono pequeno">{foto.nome}</p>
+        <p className="pequeno">
+          {foto.capturadaEm ? formatarDataHora(foto.capturadaEm) : ''}
+          {foto.gps ? ` · ${foto.gps}` : ' · sem GPS'}
+          {foto.alerta ? ` · ⚠ parece ${foto.alerta}` : ''}
+        </p>
         {vinculaAntena && (
           <div className="campo">
             <label htmlFor="ant-foto">Nº da antena nesta foto</label>

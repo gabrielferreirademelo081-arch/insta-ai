@@ -14,7 +14,12 @@ export interface CampoDef {
   /** Sugestões de preenchimento (datalist), o valor continua livre. */
   sugestoes?: string[];
   placeholder?: string;
-  padrao?: 'hoje';
+  /** Valor inicial ao criar a vistoria. 'hoje' = data atual. */
+  padrao?: string;
+  /** Para tipo 'numero': faixa aceita (fora dela mostra aviso). */
+  min?: number;
+  max?: number;
+  formato?: 'cep';
 }
 
 export interface GrupoCampos {
@@ -74,6 +79,12 @@ export interface TipoConfig {
   antena: CampoDef[];
   /** Campos extras da tabela de antenas (salvos junto do registro). */
   antenaExtras: CampoDef[];
+  /** Campo do registro (Sim/Não) que liga o carimbo nas fotos. Vazio = Sim. */
+  campoCarimbo?: string;
+  /** A altura da antena não pode passar a altura da EV. */
+  limiteAlturaAntena?: { campoAntena: string; campoRegistro: string };
+  /** Limites da checagem automática de foto (hipótese inicial; ajuste com fotos reais). */
+  qualidadeFoto: { brilhoMinimo: number; nitidezMinima: number };
   /** true = não deixa exportar com pendências; false = só avisa. */
   bloquearExportComPendentes: boolean;
 }

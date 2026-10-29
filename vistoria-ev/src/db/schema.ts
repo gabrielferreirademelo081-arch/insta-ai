@@ -33,6 +33,11 @@ export interface Foto {
   createdAt: number;
   /** Nº da antena (item 43). */
   antena?: string;
+  /** Momento da captura (ms) e posição "lat, long" do aparelho na hora. */
+  capturadaEm?: number;
+  gps?: string;
+  /** Checagem automática: escura/tremida. Some quando o vistoriador escolhe manter. */
+  alerta?: 'escura' | 'tremida';
   thumb: ArrayBuffer;
 }
 

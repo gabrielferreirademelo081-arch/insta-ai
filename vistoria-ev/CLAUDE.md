@@ -30,6 +30,10 @@ Vite + React 18 + TypeScript, vite-plugin-pwa (workbox generateSW), idb, jszip. 
 - Duplicar vistoria copia registro e antenas, não fotos/checklist.
 - Câmera via `<input capture="environment">` (sem getUserMedia); botão Galeria como alternativa.
 - Exportação com pendências só avisa; `bloquearExportComPendentes` no config muda isso.
+- **Validação** (`lib/validacao.ts`): `min`/`max`/`formato` no CampoDef + `limiteAlturaAntena`. Só avisa (laranja) e entra em "Valores a conferir" nas pendências; nunca bloqueia digitação.
+- **Metadados da foto**: o canvas apaga o EXIF, então o app grava `capturadaEm` (lastModified do arquivo) e `gps` (geolocalização do aparelho, cache de 2 min, timeout 4 s, falha silenciosa). Vão para registro.json/txt e, se `carimboFotos` ≠ "Não", para uma faixa carimbada na foto.
+- **Qualidade da foto** (`medirQualidade`): brilho médio e variância do Laplaciano em 640 px, divididos em 4x4 regiões (vale a 2ª mais nítida, para céu/parede lisa não gerar falso alarme). Limites em `qualidadeFoto` no config são hipótese inicial: calibrar com fotos reais. Alerta nunca bloqueia: "Refazer" (abre a câmera e troca a foto) ou "Manter".
+- **Prévia** (`vite build --mode artifact`): sem service worker, rota em memória e `confirm` sempre verdadeiro, para rodar dentro do frame do claude.ai.
 
 ## Cuidados
 - Não mudar a versão do DB sem escrever migração em `schema.ts` (dados de campo não podem ser perdidos).

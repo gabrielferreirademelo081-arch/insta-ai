@@ -7,6 +7,7 @@ import { useAutosave } from '../hooks/useAutosave';
 import { mensagemErro } from '../lib/erros';
 import { mesmaAntena, rotuloAntena } from '../lib/naming';
 import { toast } from '../lib/toast';
+import { avisosAntena } from '../lib/validacao';
 import type { PropsAba } from './Vistoria';
 
 function proximoNumero(lista: Antena[]): string {
@@ -104,6 +105,8 @@ export function Antenas({ v, setCampo }: PropsAba) {
 
       {lista.map((a, i) => {
         const aberto = aberta === a.id;
+        const avisos = avisosAntena(cfg, a.campos, v.campos);
+        const nAvisos = Object.keys(avisos).length;
         const nFotos = fotos43.filter((f) => mesmaAntena(f.antena, a.campos.numero)).length;
         const semOperadora = !(a.campos.operadora ?? '').trim();
         const repetido = numerosRepetidos.has(rotuloAntena(a.campos.numero ?? ''));
@@ -120,6 +123,7 @@ export function Antenas({ v, setCampo }: PropsAba) {
                   {a.campos.status || ''} · {nFotos} foto(s) no item 43
                   {semOperadora && <b className="texto-alerta"> · falta operadora</b>}
                   {repetido && <b className="texto-alerta"> · nº repetido</b>}
+                  {nAvisos > 0 && <b className="texto-alerta"> · {nAvisos} valor(es) a conferir</b>}
                 </span>
               </span>
               <span>{aberto ? '▲' : '▼'}</span>
@@ -132,6 +136,7 @@ export function Antenas({ v, setCampo }: PropsAba) {
                     idPrefixo={`a${i}`}
                     def={c}
                     valor={a.campos[c.key] ?? ''}
+                    aviso={avisos[c.key] ?? null}
                     onChange={(x) => mudar(a.id, c.key, x)}
                     onAnterior={i > 0 && c.key !== 'numero' ? () => mudar(a.id, c.key, lista[i - 1].campos[c.key] ?? '') : undefined}
                   />

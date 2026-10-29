@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { CampoDef } from '../config/types';
 import { minhaLocalizacao } from '../lib/geo';
 import { toast } from '../lib/toast';
+import { validarCampo } from '../lib/validacao';
 
 interface Props {
   def: CampoDef;
@@ -10,12 +11,15 @@ interface Props {
   /** Mostra o botão "mesmo da anterior". */
   onAnterior?: () => void;
   idPrefixo?: string;
+  /** Aviso externo (ex.: regra entre campos). Sem ele, valida formato/faixa do próprio campo. */
+  aviso?: string | null;
 }
 
-export function Campo({ def, valor, onChange, onAnterior, idPrefixo = 'f' }: Props) {
+export function Campo({ def, valor, onChange, onAnterior, idPrefixo = 'f', aviso }: Props) {
   const id = `${idPrefixo}-${def.key}`;
   const [buscandoGps, setBuscandoGps] = useState(false);
   const faltando = def.obrigatorio && !valor.trim();
+  const msg = aviso ?? validarCampo(def, valor);
 
   let controle: JSX.Element;
   switch (def.tipo) {
@@ -98,7 +102,7 @@ export function Campo({ def, valor, onChange, onAnterior, idPrefixo = 'f' }: Pro
   }
 
   return (
-    <div className={`campo${faltando ? ' faltando' : ''}`}>
+    <div className={`campo${faltando ? ' faltando' : ''}${msg ? ' invalido' : ''}`}>
       <div className="campo-topo">
         <label id={`${id}-l`} htmlFor={id}>
           {def.label}
@@ -111,6 +115,7 @@ export function Campo({ def, valor, onChange, onAnterior, idPrefixo = 'f' }: Pro
         )}
       </div>
       {controle}
+      {msg && <p className="campo-aviso">⚠ {msg}</p>}
     </div>
   );
 }

@@ -37,6 +37,8 @@ Abra uma vez com internet; depois funciona em modo avião.
 
 1. **Nova vistoria** → aba *Registro* (salva sozinho).
 2. Aba *Fotos*: toque no item para abrir a câmera. “›” abre o detalhe (várias fotos, *Não tem*, *Outro* + justificativa).
+   A barra azul **Próximo pendente** leva direto ao próximo item que falta. Se a foto sair escura ou tremida, o app oferece **Refazer** na hora.
+   Cada foto guarda data/hora e GPS do aparelho e, por padrão, sai carimbada com obra, item, data e GPS (desligue em *Registro → Fotos*).
    Itens 3/4 (faces), 33 (visadas), 38 e 43 abrem direto o detalhe.
 3. *Patologias*: padrão “não encontrada”. Encontrada exige foto.
 4. *Antenas*: uma linha por antena; “Duplicar linha” e “↑ anterior” por campo. No item 43, informe o nº da antena antes de fotografar.
@@ -62,5 +64,5 @@ A barra da obra vira hífen (`126/843` → `126-843`). Patologias usam `P04`, pr
 ## Ajustar checklist, campos e pastas
 
 Tudo em [`src/config/ev.ts`](src/config/ev.ts): campos do registro, itens, apelidos dos arquivos, sub-fotos, patologias, pranchas,
-mapeamento item → pasta e `bloquearExportComPendentes`.
+mapeamento item → pasta, faixas de valores aceitos (`min`/`max`), limites da checagem de foto (`qualidadeFoto`) e `bloquearExportComPendentes`.
 Para um novo tipo (FD, rooftop): copie `ev.ts`, ajuste e registre em `src/config/index.ts`.

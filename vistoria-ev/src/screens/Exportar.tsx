@@ -57,6 +57,7 @@ export function Exportar({ v }: PropsAba) {
         ['Patologias', pend.patologias],
         ['Pranchas', pend.pranchas],
         ['Antenas', pend.antenas],
+        ['Valores a conferir', pend.valores],
       ]
     : [];
 

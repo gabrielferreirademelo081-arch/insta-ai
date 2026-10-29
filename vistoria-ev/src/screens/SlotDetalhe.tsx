@@ -29,6 +29,8 @@ export function SlotDetalhe({ v, ik }: PropsAba & { ik: string }) {
 
   const anterior = resumo[idx - 1];
   const proximo = resumo[idx + 1];
+  // Próximo item incompleto depois deste (volta ao início da lista se preciso).
+  const proximoPendente = [...resumo.slice(idx + 1), ...resumo.slice(0, idx)].find((x) => !x.completo);
 
   return (
     <>
@@ -87,6 +89,15 @@ export function SlotDetalhe({ v, ik }: PropsAba & { ik: string }) {
         />
       ))}
 
+      {secao === 'C' && proximoPendente && (
+        <button
+          type="button"
+          className="btn primario bloco grande"
+          onClick={() => ir(`/v/${v.id}/item/${proximoPendente.ik}`)}
+        >
+          Próximo pendente: {pad(proximoPendente.item.num, 2)} →
+        </button>
+      )}
       {secao === 'C' && (
         <div className="linha-botoes navegacao-itens">
           <button

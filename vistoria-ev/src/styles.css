@@ -235,3 +235,27 @@ details summary { min-height: 40px; display: flex; align-items: center; font-wei
   background: #1f2937; color: #fff; padding: 14px 16px; border-radius: var(--raio);
   box-shadow: 0 6px 20px rgba(0,0,0,.25); text-align: center;
 }
+
+/* Validação */
+.campo.invalido input { border-color: var(--pend); }
+.campo-aviso { margin: 6px 0 0; font-size: .85rem; color: var(--pend); font-weight: 600; }
+
+/* Alerta de qualidade da foto */
+.alerta-foto { margin-top: 10px; }
+.thumb-alerta {
+  position: absolute; right: 4px; top: 4px; font-size: .8rem; background: var(--pend); color: #fff;
+  border-radius: 6px; padding: 1px 5px;
+}
+
+/* Próximo pendente (acima das abas, alcance do polegar) */
+.com-abas .conteudo:has(.barra-proximo) { padding-bottom: calc(var(--abas-h) + 110px + env(safe-area-inset-bottom)); }
+.barra-proximo {
+  position: fixed; left: 12px; right: 12px; z-index: 15;
+  bottom: calc(var(--abas-h) + 10px + env(safe-area-inset-bottom));
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+  min-height: 60px; padding: 8px 16px; border: 0; border-radius: var(--raio);
+  background: var(--azul); color: #fff; text-align: left; box-shadow: 0 6px 18px rgba(11,61,145,.35);
+}
+.barra-proximo .pequeno { color: rgba(255,255,255,.8); }
+.barra-proximo-item { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.toast { bottom: calc(var(--abas-h) + 84px + env(safe-area-inset-bottom)); }
