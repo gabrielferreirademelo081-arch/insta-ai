@@ -9,7 +9,7 @@ Croqui, silhueta e tabela de emendas continuam à mão; o app só fotografa essa
 ```bash
 cd vistoria-ev
 npm install
-npm run dev        # http://localhost:5173 (e na rede local)
+npm run dev        # http://localhost:5173 (só nesta máquina)
 npm run build      # gera dist/
 npm run preview    # serve o build (o service worker só funciona no build)
 ```
