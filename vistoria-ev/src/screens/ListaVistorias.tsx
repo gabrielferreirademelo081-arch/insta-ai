@@ -43,7 +43,8 @@ export function ListaVistorias() {
     }
   };
 
-  const iosSemInstalar = isIOS() && !isStandalone();
+  const previa = import.meta.env.MODE === 'artifact';
+  const iosSemInstalar = !previa && isIOS() && !isStandalone();
 
   return (
     <div className="tela">
@@ -55,6 +56,12 @@ export function ListaVistorias() {
       </header>
 
       <main className="conteudo">
+        {previa && (
+          <div className="aviso forte">
+            <b>Prévia para ver as telas.</b> Aqui não instala, não funciona offline e não baixa o ZIP. Não use em
+            campo.
+          </div>
+        )}
         {iosSemInstalar && (
           <div className="aviso forte">
             <b>Instale o app antes de usar em campo.</b> No iPhone, sem instalar, o sistema pode apagar os dados.

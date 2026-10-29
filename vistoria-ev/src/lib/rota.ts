@@ -8,7 +8,13 @@ export type Rota =
 
 const ABAS: Aba[] = ['registro', 'fotos', 'patologias', 'antenas', 'pranchas', 'exportar'];
 
-export function lerRota(hash = location.hash): Rota {
+/** Na prévia (build "artifact") a rota fica em memória: o frame do claude.ai não repassa #/caminho. */
+const MEMORIA = import.meta.env.MODE === 'artifact';
+let rotaMemoria = '';
+export const EVENTO_ROTA = MEMORIA ? 'rota-memoria' : 'hashchange';
+export const hashAtual = () => (MEMORIA ? rotaMemoria : location.hash);
+
+export function lerRota(hash = hashAtual()): Rota {
   const p = hash.replace(/^#\/?/, '').split('/').filter(Boolean).map(decodeURIComponent);
   if (p[0] !== 'v' || !p[1]) return { tela: 'lista' };
   if (p[2] === 'item' && p[3]) return { tela: 'item', id: p[1], ik: p[3] };
@@ -17,5 +23,10 @@ export function lerRota(hash = location.hash): Rota {
 }
 
 export function ir(caminho: string) {
-  location.hash = caminho;
+  if (!MEMORIA) {
+    location.hash = caminho;
+    return;
+  }
+  rotaMemoria = `#${caminho}`;
+  window.dispatchEvent(new Event(EVENTO_ROTA));
 }

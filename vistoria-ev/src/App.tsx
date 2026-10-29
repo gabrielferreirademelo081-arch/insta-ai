@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Toast } from './components/Toast';
-import { lerRota, type Rota } from './lib/rota';
+import { EVENTO_ROTA, lerRota, type Rota } from './lib/rota';
 import { ListaVistorias } from './screens/ListaVistorias';
 import { VistoriaTela } from './screens/Vistoria';
 
@@ -11,8 +11,8 @@ export default function App() {
       setRota(lerRota());
       window.scrollTo(0, 0);
     };
-    window.addEventListener('hashchange', h);
-    return () => window.removeEventListener('hashchange', h);
+    window.addEventListener(EVENTO_ROTA, h);
+    return () => window.removeEventListener(EVENTO_ROTA, h);
   }, []);
 
   return (
