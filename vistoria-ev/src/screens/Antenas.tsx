@@ -1,0 +1,165 @@
+import { useEffect, useState } from 'react';
+import { Campo } from '../components/Campo';
+import { getConfig } from '../config';
+import { excluirAntena, listarAntenas, listarFotos, novoId, salvarAntena } from '../db/repo';
+import type { Antena, Foto } from '../db/schema';
+import { useAutosave } from '../hooks/useAutosave';
+import { mensagemErro } from '../lib/erros';
+import { mesmaAntena, rotuloAntena } from '../lib/naming';
+import { toast } from '../lib/toast';
+import type { PropsAba } from './Vistoria';
+
+function proximoNumero(lista: Antena[]): string {
+  const nums = lista.map((a) => parseInt(a.campos.numero, 10)).filter((n) => !isNaN(n));
+  return String((nums.length ? Math.max(...nums) : 0) + 1);
+}
+
+export function Antenas({ v, setCampo }: PropsAba) {
+  const cfg = getConfig(v.tipo);
+  const [lista, setLista] = useState<Antena[] | null>(null);
+  const [fotos43, setFotos43] = useState<Foto[]>([]);
+  const [aberta, setAberta] = useState<string | null>(null);
+  const { agendar, flush } = useAutosave<Antena>(salvarAntena);
+
+  useEffect(() => {
+    listarAntenas(v.id)
+      .then(setLista)
+      .catch((e) => toast(mensagemErro(e)));
+    listarFotos(v.id).then((f) => setFotos43(f.filter((x) => x.antena)));
+  }, [v.id]);
+
+  if (!lista) return <p>Carregando…</p>;
+
+  const reordenar = (l: Antena[]) => l.map((a, i) => (a.ordem === i ? a : { ...a, ordem: i }));
+
+  const gravarLista = async (nova: Antena[], abrir?: string) => {
+    flush();
+    const ord = reordenar(nova);
+    setLista(ord);
+    if (abrir) setAberta(abrir);
+    try {
+      for (const a of ord) await salvarAntena(a);
+    } catch (e) {
+      toast(mensagemErro(e));
+    }
+  };
+
+  const mudar = (id: string, key: string, valor: string) => {
+    setLista((l) =>
+      l!.map((a) => {
+        if (a.id !== id) return a;
+        const n = { ...a, campos: { ...a.campos, [key]: valor } };
+        agendar(n.id, n);
+        return n;
+      }),
+    );
+  };
+
+  const adicionar = () => {
+    const a: Antena = {
+      id: novoId(),
+      vistoriaId: v.id,
+      ordem: lista.length,
+      campos: { numero: proximoNumero(lista), status: 'Ativa' },
+    };
+    gravarLista([...lista, a], a.id);
+  };
+
+  const duplicar = (i: number) => {
+    const orig = lista[i];
+    const c: Antena = {
+      id: novoId(),
+      vistoriaId: v.id,
+      ordem: i + 1,
+      campos: { ...orig.campos, numero: proximoNumero(lista) },
+    };
+    gravarLista([...lista.slice(0, i + 1), c, ...lista.slice(i + 1)], c.id);
+  };
+
+  const excluir = async (i: number) => {
+    const a = lista[i];
+    if (!confirm(`Excluir a antena ${a.campos.numero || i + 1}?`)) return;
+    flush();
+    try {
+      await excluirAntena(a.id);
+      gravarLista(lista.filter((x) => x.id !== a.id));
+    } catch (e) {
+      toast(mensagemErro(e));
+    }
+  };
+
+  const numerosRepetidos = new Set<string>();
+  const vistos = new Set<string>();
+  for (const a of lista) {
+    const r = rotuloAntena(a.campos.numero ?? '');
+    if (r && vistos.has(r)) numerosRepetidos.add(r);
+    vistos.add(r);
+  }
+
+  return (
+    <>
+      <p className="pequeno claro">
+        Uma linha por antena. O nº deve ser o mesmo usado nas fotos do item 43. Operadora é obrigatória.
+      </p>
+
+      {lista.map((a, i) => {
+        const aberto = aberta === a.id;
+        const nFotos = fotos43.filter((f) => mesmaAntena(f.antena, a.campos.numero)).length;
+        const semOperadora = !(a.campos.operadora ?? '').trim();
+        const repetido = numerosRepetidos.has(rotuloAntena(a.campos.numero ?? ''));
+        const resumo = [a.campos.operadora, a.campos.tipo, a.campos.alturaCentro && `${a.campos.alturaCentro} m`, a.campos.azimute && `Az ${a.campos.azimute}°`]
+          .filter(Boolean)
+          .join(' · ');
+        return (
+          <section key={a.id} className={`cartao antena${semOperadora ? ' faltando' : ''}`}>
+            <button type="button" className="antena-cab" onClick={() => setAberta(aberto ? null : a.id)}>
+              <span className="item-num">{a.campos.numero || '?'}</span>
+              <span className="antena-resumo">
+                {resumo || 'Sem dados'}
+                <span className="pequeno">
+                  {a.campos.status || ''} · {nFotos} foto(s) no item 43
+                  {semOperadora && <b className="texto-alerta"> · falta operadora</b>}
+                  {repetido && <b className="texto-alerta"> · nº repetido</b>}
+                </span>
+              </span>
+              <span>{aberto ? '▲' : '▼'}</span>
+            </button>
+            {aberto && (
+              <div className="antena-corpo">
+                {cfg.antena.map((c) => (
+                  <Campo
+                    key={c.key}
+                    idPrefixo={`a${i}`}
+                    def={c}
+                    valor={a.campos[c.key] ?? ''}
+                    onChange={(x) => mudar(a.id, c.key, x)}
+                    onAnterior={i > 0 && c.key !== 'numero' ? () => mudar(a.id, c.key, lista[i - 1].campos[c.key] ?? '') : undefined}
+                  />
+                ))}
+                <div className="linha-botoes">
+                  <button type="button" className="btn secundario" onClick={() => duplicar(i)}>
+                    Duplicar linha
+                  </button>
+                  <button type="button" className="btn perigo" onClick={() => excluir(i)}>
+                    Excluir
+                  </button>
+                </div>
+              </div>
+            )}
+          </section>
+        );
+      })}
+
+      <button type="button" className="btn primario bloco grande" onClick={adicionar}>
+        + Adicionar antena
+      </button>
+
+      <section className="cartao">
+        <h2>Esteira e cabos</h2>
+        {cfg.antenaExtras.map((c) => (
+          <Campo key={c.key} def={c} valor={v.campos[c.key] ?? ''} onChange={(x) => setCampo(c.key, x)} />
+        ))}
+      </section>
+    </>
+  );
+}
