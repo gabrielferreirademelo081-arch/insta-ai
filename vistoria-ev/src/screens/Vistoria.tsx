@@ -5,6 +5,7 @@ import type { Vistoria } from '../db/schema';
 import { useAutosave } from '../hooks/useAutosave';
 import { mensagemErro } from '../lib/erros';
 import { ir, type Aba, type Rota } from '../lib/rota';
+import { exportacaoAtrasada } from '../lib/storage';
 import { toast } from '../lib/toast';
 import { Antenas } from './Antenas';
 import { Checklist } from './Checklist';
@@ -54,8 +55,17 @@ export function VistoriaTela({ rota }: { rota: Exclude<Rota, { tela: 'lista' }> 
     [agendar],
   );
 
-  // Salva pendências ao trocar de aba/tela.
-  useEffect(() => flush(), [rota, flush]);
+  // Salva pendências ao trocar de aba/tela e atualiza a data da última exportação (muda na aba Exportar).
+  useEffect(() => {
+    flush();
+    obterVistoria(rota.id).then((db) => {
+      const atual = vRef.current;
+      if (!db || !atual || db.ultimaExportacao === atual.ultimaExportacao) return;
+      const novo = { ...atual, ultimaExportacao: db.ultimaExportacao };
+      vRef.current = novo;
+      setV(novo);
+    });
+  }, [rota, flush]);
 
   if (v === undefined) return <div className="tela"><p className="conteudo">Carregando…</p></div>;
   if (v === null)
@@ -92,6 +102,11 @@ export function VistoriaTela({ rota }: { rota: Exclude<Rota, { tela: 'lista' }> 
       </header>
 
       <main className="conteudo">
+        {abaAtual !== 'exportar' && exportacaoAtrasada(v) && (
+          <button type="button" className="aviso forte aviso-botao" onClick={() => ir(`/v/${v.id}/exportar`)}>
+            ⚠ Alterações sem exportar há mais de 24 h. <b>Exportar agora →</b>
+          </button>
+        )}
         {rota.tela === 'item' ? (
           <SlotDetalhe {...props} ik={rota.ik} />
         ) : rota.aba === 'registro' ? (

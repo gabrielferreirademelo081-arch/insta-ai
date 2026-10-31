@@ -32,3 +32,11 @@ export function formatarBytes(b: number): string {
   if (b < 1024 * 1024 * 1024) return `${(b / 1024 / 1024).toFixed(1)} MB`;
   return `${(b / 1024 / 1024 / 1024).toFixed(2)} GB`;
 }
+
+const DIA = 24 * 3600 * 1000;
+
+/** Alterações não exportadas há mais de 24 h (conta a partir da última exportação ou da criação). */
+export function exportacaoAtrasada(v: { createdAt: number; updatedAt: number; ultimaExportacao?: number }): boolean {
+  const base = v.ultimaExportacao ?? v.createdAt;
+  return v.updatedAt > (v.ultimaExportacao ?? 0) && Date.now() - base > DIA;
+}

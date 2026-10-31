@@ -33,8 +33,10 @@ Vite + React 18 + TypeScript, vite-plugin-pwa (workbox generateSW), idb, jszip. 
 - **Validação** (`lib/validacao.ts`): `min`/`max`/`formato` no CampoDef + `limiteAlturaAntena`. Só avisa (laranja) e entra em "Valores a conferir" nas pendências; nunca bloqueia digitação.
 - **Metadados da foto**: o canvas apaga o EXIF, então o app grava `capturadaEm` (lastModified do arquivo) e `gps` (geolocalização do aparelho, cache de 2 min, timeout 4 s, falha silenciosa). Vão para registro.json/txt e, se `carimboFotos` ≠ "Não", para uma faixa carimbada na foto.
 - **Qualidade da foto** (`medirQualidade`): brilho médio e variância do Laplaciano em 640 px, divididos em 4x4 regiões (vale a 2ª mais nítida, para céu/parede lisa não gerar falso alarme). Limites em `qualidadeFoto` no config são hipótese inicial: calibrar com fotos reais. Alerta nunca bloqueia: "Refazer" (abre a câmera e troca a foto) ou "Manter".
+- **Importar backup** (`lib/importar.ts`): lê o `registro.json` do ZIP (formato 1 e 2; o 2 tem `estadoSalvo` por slot). Mantém o id original se não existir no aparelho, senão cria cópia. Fotos entram sem recompressão (só gera a miniatura), na ordem original. Falha no meio desfaz tudo. Exportar → importar → exportar dá fotos idênticas em nome e bytes.
 - **Prévia** (`vite build --mode artifact`): sem service worker, rota em memória e `confirm` sempre verdadeiro, para rodar dentro do frame do claude.ai.
 
 ## Cuidados
+- O `registro.json` é também o formato de backup: mudança nele exige subir `formato` e manter a leitura das versões antigas em `importar.ts`.
 - Não mudar a versão do DB sem escrever migração em `schema.ts` (dados de campo não podem ser perdidos).
 - Mapeamento item → pasta é hipótese; mudar só em `config/ev.ts`.

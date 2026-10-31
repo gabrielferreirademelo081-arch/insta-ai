@@ -45,7 +45,12 @@ Abra uma vez com internet; depois funciona em modo avião.
 5. *Pranchas*: croqui, silhueta (frente/verso), tabela de emendas.
 6. *Exportar*: lista pendências → **Gerar ZIP** → Compartilhar (Drive, WhatsApp, e-mail) ou Baixar.
 
-**Exporte no fim de cada site.** Os dados ficam só no aparelho.
+**Exporte no fim de cada site.** Os dados ficam só no aparelho. O app avisa quando uma vistoria tem alterações sem exportar há mais de 24 h.
+
+### Restaurar um backup
+Na tela inicial, **Importar ZIP** → escolha um ZIP exportado pelo app → **Importar**.
+Volta tudo: registro, checklist com estados e justificativas, patologias, antenas e fotos (sem perder qualidade).
+Serve para trocar de celular ou recuperar dados apagados. Se a vistoria já existir no aparelho, é criada uma cópia.
 
 ## Saída
 

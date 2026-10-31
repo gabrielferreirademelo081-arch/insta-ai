@@ -259,3 +259,8 @@ details summary { min-height: 40px; display: flex; align-items: center; font-wei
 .barra-proximo .pequeno { color: rgba(255,255,255,.8); }
 .barra-proximo-item { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 .toast { bottom: calc(var(--abas-h) + 84px + env(safe-area-inset-bottom)); }
+
+/* Importar / lembrete */
+.rodape-acao { gap: 8px; }
+.rodape-acao .botao-importar { flex: 0 0 auto; width: auto; }
+.aviso-botao { display: block; width: 100%; text-align: left; border: 1px solid #f5c27a; font: inherit; color: inherit; cursor: pointer; }

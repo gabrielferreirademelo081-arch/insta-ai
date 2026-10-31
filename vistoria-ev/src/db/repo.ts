@@ -36,6 +36,16 @@ export async function criarVistoria(tipo: string): Promise<Vistoria> {
   return v;
 }
 
+/** Grava uma vistoria inteira de uma vez (importação de backup). Fotos entram depois, uma a uma. */
+export async function gravarVistoriaImportada(v: Vistoria, slots: SlotChecklist[], antenas: Antena[]): Promise<void> {
+  const db = await getDB();
+  const tx = db.transaction(['vistorias', 'slots', 'antenas'], 'readwrite');
+  await tx.objectStore('vistorias').put(v);
+  for (const s of slots) await tx.objectStore('slots').put(s);
+  for (const a of antenas) await tx.objectStore('antenas').put(a);
+  await tx.done;
+}
+
 export async function salvarVistoria(v: Vistoria): Promise<void> {
   await (await getDB()).put('vistorias', { ...v, updatedAt: Date.now() });
 }
@@ -117,7 +127,7 @@ export async function listarFotos(vistoriaId: string): Promise<Foto[]> {
 }
 
 export async function adicionarFoto(
-  dados: Omit<Foto, 'id' | 'createdAt' | 'ordem' | 'thumb'> & { arquivo: Blob; thumb: Blob },
+  dados: Omit<Foto, 'id' | 'createdAt' | 'ordem' | 'thumb'> & { arquivo: Blob; thumb: Blob; ordem?: number },
 ): Promise<Foto> {
   const db = await getDB();
   const [buf, thumb] = await Promise.all([dados.arquivo.arrayBuffer(), dados.thumb.arrayBuffer()]);
@@ -131,7 +141,7 @@ export async function adicionarFoto(
     capturadaEm: dados.capturadaEm ?? agora,
     gps: dados.gps,
     alerta: dados.alerta,
-    ordem: agora + Math.random(),
+    ordem: dados.ordem ?? agora + Math.random(),
     createdAt: agora,
     thumb,
   };

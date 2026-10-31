@@ -294,13 +294,15 @@ export function gerarJson(d: DadosVistoria, nomes: FotoExport[], pend: Pendencia
         slot: s.key,
         titulo: tituloSlot(d.cfg, d.v.campos, s.key),
         estado: s.status,
+        /** Estado gravado (NAO_TEM/OUTRO/null): usado para restaurar o backup. */
+        estadoSalvo: s.slot?.estado ?? null,
         justificativa: s.slot?.justificativa ?? '',
         fotos: (porSlot.get(s.key) ?? []).map(metaFoto),
       })),
     );
   const json = {
     app: 'vistoria-ev',
-    formato: 1,
+    formato: 2,
     exportadoEm: new Date().toISOString(),
     vistoria: {
       id: d.v.id,

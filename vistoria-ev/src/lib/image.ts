@@ -97,6 +97,11 @@ export function medirQualidade(c: HTMLCanvasElement): { brilho: number; nitidez:
   return { brilho: soma / (w * h), nitidez: variancias[1] ?? 0 };
 }
 
+/** Só a miniatura (usada ao importar backup: a foto grande entra sem recompressão). */
+export async function gerarThumb(arquivo: Blob): Promise<Blob> {
+  return codificar(canvasReduzido(await carregar(arquivo), LADO_THUMB), 0.7);
+}
+
 export interface OpcoesFoto {
   carimbo?: string[];
   limites: { brilhoMinimo: number; nitidezMinima: number };
