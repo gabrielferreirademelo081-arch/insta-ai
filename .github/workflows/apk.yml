@@ -19,7 +19,7 @@ jobs:
       - run: npm run build
       - run: npx cap sync android
       # APK de debug: instala direto no celular (ativar "fontes desconhecidas"). Para Play Store seria preciso assinar release.
-      - run: ./gradlew assembleDebug
+      - run: chmod +x gradlew && ./gradlew assembleDebug
         working-directory: vistoria-ev/android
       - uses: actions/upload-artifact@v4
         with:
