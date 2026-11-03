@@ -40,3 +40,8 @@ Vite + React 18 + TypeScript, vite-plugin-pwa (workbox generateSW), idb, jszip. 
 - O `registro.json` é também o formato de backup: mudança nele exige subir `formato` e manter a leitura das versões antigas em `importar.ts`.
 - Não mudar a versão do DB sem escrever migração em `schema.ts` (dados de campo não podem ser perdidos).
 - Mapeamento item → pasta é hipótese; mudar só em `config/ev.ts`.
+
+## Android (Capacitor 7)
+`capacitor.config.ts` (appId `br.com.kk.vistoriaev`, webDir `dist`) + pasta `android/`. Build local: `npm run build && npx cap sync android`, depois Gradle (JDK 21). CI: `.github/workflows/apk.yml`.
+Na WebView não há Web Share nem download por `<a>`: `lib/share.ts` usa Filesystem (cache) + Share quando `Capacitor.isNativePlatform()`. Permissões de câmera/GPS no AndroidManifest.
+`lib/relatorio.ts` gera o PDF (jsPDF, import dinâmico).

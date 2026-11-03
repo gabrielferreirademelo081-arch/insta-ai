@@ -1,0 +1,27 @@
+name: APK Android
+on:
+  push:
+    branches: [claude/pwa-vistoria-ev-ftxrhl]
+  workflow_dispatch:
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: vistoria-ev
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: vistoria-ev/package-lock.json }
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 21 }
+      - run: npm ci
+      - run: npm run build
+      - run: npx cap sync android
+      # APK de debug: instala direto no celular (ativar "fontes desconhecidas"). Para Play Store seria preciso assinar release.
+      - run: ./gradlew assembleDebug
+        working-directory: vistoria-ev/android
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vistoria-ev-apk
+          path: vistoria-ev/android/app/build/outputs/apk/debug/app-debug.apk

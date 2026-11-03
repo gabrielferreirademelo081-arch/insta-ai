@@ -15,7 +15,7 @@ A raiz fica livre para outros projetos (o nome `insta-ai` veio de um projeto de 
 - Simples primeiro; só adicionar biblioteca com motivo forte.
 - Nada de segredo/token no código ou no chat.
 - **Não expor nada na rede local**: scripts de dev/preview sem `--host`.
-- Ele usa **iPhone**. Testar pensando no Safari/iOS (PWA instalada, câmera via `<input capture>`, armazenamento que o iOS pode apagar).
+- Agora o alvo é **Android** (APK via Capacitor); a PWA continua funcionando no navegador/iOS. Câmera via `<input capture>`.
 
 ## Fluxo de trabalho
 - Branch de trabalho: `claude/pwa-vistoria-ev-ftxrhl` (hoje é o único branch e o padrão do repositório).
@@ -33,8 +33,7 @@ Os limites da checagem de foto (`qualidadeFoto` em `vistoria-ev/src/config/ev.ts
 
 ## Próximos passos
 1. **Publicar na Vercel**: importar o repo, Root Directory = `vistoria-ev`, preset Vite. Abrir no Safari do iPhone e instalar.
-2. **Relatório fotográfico em PDF** a partir da vistoria: capa com dados do site, fotos com legenda (item/descrição) na ordem do checklist,
-   tabela de antenas no fim. Pedir ao Gabriel um modelo da KK; sem modelo, fazer versão genérica primeiro.
+2. ~~Relatório PDF~~ feito (versão genérica, `lib/relatorio.ts`); falta o modelo da KK. **APK Android**: `.github/workflows/apk.yml` gera `app-debug.apk` (artefato do Actions); ainda não testado em aparelho real.
 3. Tabela de antenas no formato da planilha da KK (precisa do modelo).
 4. Depois, se houver demanda: configs de FD e rooftop (novo arquivo em `vistoria-ev/src/config/`), rascunho de silhueta a partir da tabela de antenas.
 

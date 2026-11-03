@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { getConfig } from '../config';
 import { calcularPendencias, carregarDados, gerarZip, type Pendencias } from '../lib/export';
 import { mensagemErro } from '../lib/erros';
+import { gerarPdf } from '../lib/relatorio';
 import { resumoItens, mapaSlots } from '../lib/slots';
 import { baixar, compartilhar, podeCompartilharArquivo } from '../lib/share';
 import { estimativa, formatarBytes } from '../lib/storage';
@@ -61,6 +62,18 @@ export function Exportar({ v }: PropsAba) {
       ]
     : [];
 
+  const gerarRelatorio = async () => {
+    setRes(null);
+    try {
+      const { blob, nome } = await gerarPdf(v, setProgresso);
+      setRes({ arquivo: new File([blob], nome, { type: 'application/pdf' }) });
+    } catch (e) {
+      toast(mensagemErro(e));
+    } finally {
+      setProgresso('');
+    }
+  };
+
   return (
     <>
       {info && (
@@ -104,6 +117,9 @@ export function Exportar({ v }: PropsAba) {
 
       <button type="button" className="btn primario bloco grande" disabled={!!progresso || bloqueado || !pend} onClick={gerar}>
         {progresso || '📦 Gerar ZIP'}
+      </button>
+      <button type="button" className="btn secundario bloco grande" disabled={!!progresso || !pend} onClick={gerarRelatorio}>
+        📄 Gerar relatório PDF
       </button>
 
       {res && (
