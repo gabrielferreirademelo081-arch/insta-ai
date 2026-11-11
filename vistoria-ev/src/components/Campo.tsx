@@ -13,9 +13,11 @@ interface Props {
   idPrefixo?: string;
   /** Aviso externo (ex.: regra entre campos). Sem ele, valida formato/faixa do próprio campo. */
   aviso?: string | null;
+  onFocus?: () => void;
+  onBlur?: () => void;
 }
 
-export function Campo({ def, valor, onChange, onAnterior, idPrefixo = 'f', aviso }: Props) {
+export function Campo({ def, valor, onChange, onAnterior, idPrefixo = 'f', aviso, onFocus, onBlur }: Props) {
   const id = `${idPrefixo}-${def.key}`;
   const [buscandoGps, setBuscandoGps] = useState(false);
   const faltando = def.obrigatorio && !valor.trim();
@@ -88,6 +90,8 @@ export function Campo({ def, valor, onChange, onAnterior, idPrefixo = 'f', aviso
             list={def.sugestoes ? `${id}-dl` : undefined}
             value={valor}
             autoComplete="off"
+            onFocus={onFocus}
+            onBlur={onBlur}
             onChange={(e) => onChange(e.target.value)}
           />
           {def.sugestoes && (

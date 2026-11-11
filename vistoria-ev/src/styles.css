@@ -264,3 +264,7 @@ details summary { min-height: 40px; display: flex; align-items: center; font-wei
 .rodape-acao { gap: 8px; }
 .rodape-acao .botao-importar { flex: 0 0 auto; width: auto; }
 .aviso-botao { display: block; width: 100%; text-align: left; border: 1px solid #f5c27a; font: inherit; color: inherit; cursor: pointer; }
+
+/* Fotos dentro do cadastro de antena */
+.fotos-antena { margin: 4px 0 12px; padding-top: 12px; border-top: 1px dashed var(--borda); }
+.fotos-antena .grid-fotos { margin-top: 8px; }

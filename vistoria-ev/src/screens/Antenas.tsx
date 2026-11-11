@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Campo } from '../components/Campo';
+import { FotosAntena } from '../components/FotosAntena';
 import { getConfig } from '../config';
-import { excluirAntena, listarAntenas, listarFotos, novoId, salvarAntena } from '../db/repo';
+import { atualizarFoto, excluirAntena, listarAntenas, listarFotos, novoId, salvarAntena } from '../db/repo';
 import type { Antena, Foto } from '../db/schema';
 import { useAutosave } from '../hooks/useAutosave';
 import { mensagemErro } from '../lib/erros';
@@ -21,13 +22,24 @@ export function Antenas({ v, setCampo }: PropsAba) {
   const [fotos43, setFotos43] = useState<Foto[]>([]);
   const [aberta, setAberta] = useState<string | null>(null);
   const { agendar, flush } = useAutosave<Antena>(salvarAntena);
+  const itemAntenas = cfg.checklist.find((i) => i.vinculaAntena)?.num;
+  /** Nº da antena quando o campo ganhou foco: ao sair, as fotos vinculadas acompanham a troca. */
+  const numeroAoFocar = useRef<{ id: string; numero: string } | null>(null);
+
+  const recarregarFotos = useCallback(
+    () =>
+      listarFotos(v.id)
+        .then((f) => setFotos43(f.filter((x) => x.antena)))
+        .catch((e) => toast(mensagemErro(e))),
+    [v.id],
+  );
 
   useEffect(() => {
     listarAntenas(v.id)
       .then(setLista)
       .catch((e) => toast(mensagemErro(e)));
-    listarFotos(v.id).then((f) => setFotos43(f.filter((x) => x.antena)));
-  }, [v.id]);
+    recarregarFotos();
+  }, [v.id, recarregarFotos]);
 
   if (!lista) return <p>Carregando…</p>;
 
@@ -43,6 +55,24 @@ export function Antenas({ v, setCampo }: PropsAba) {
     } catch (e) {
       toast(mensagemErro(e));
     }
+  };
+
+  /** Renumerou a antena: leva junto as fotos que tinham o nº antigo (se nenhuma outra antena usa esse nº). */
+  const aoSairDoNumero = async (a: Antena) => {
+    const antes = numeroAoFocar.current;
+    numeroAoFocar.current = null;
+    const novo = (a.campos.numero ?? '').trim();
+    if (!antes || antes.id !== a.id || !antes.numero || !novo || mesmaAntena(antes.numero, novo)) return;
+    if (lista.some((x) => x.id !== a.id && mesmaAntena(x.campos.numero, antes.numero))) return;
+    const afetadas = fotos43.filter((f) => mesmaAntena(f.antena, antes.numero));
+    if (!afetadas.length) return;
+    try {
+      for (const f of afetadas) await atualizarFoto({ ...f, antena: novo });
+      toast(`${afetadas.length} foto(s) passaram da antena ${antes.numero} para a ${novo}`);
+    } catch (e) {
+      toast(mensagemErro(e));
+    }
+    recarregarFotos();
   };
 
   const mudar = (id: string, key: string, valor: string) => {
@@ -139,8 +169,19 @@ export function Antenas({ v, setCampo }: PropsAba) {
                     aviso={avisos[c.key] ?? null}
                     onChange={(x) => mudar(a.id, c.key, x)}
                     onAnterior={i > 0 && c.key !== 'numero' ? () => mudar(a.id, c.key, lista[i - 1].campos[c.key] ?? '') : undefined}
+                    onFocus={c.key === 'numero' ? () => (numeroAoFocar.current = { id: a.id, numero: a.campos.numero ?? '' }) : undefined}
+                    onBlur={c.key === 'numero' ? () => aoSairDoNumero(lista[i]) : undefined}
                   />
                 ))}
+                {itemAntenas !== undefined && (
+                  <FotosAntena
+                    v={v}
+                    numero={a.campos.numero ?? ''}
+                    itemAntenas={itemAntenas}
+                    fotos={fotos43.filter((f) => mesmaAntena(f.antena, a.campos.numero))}
+                    onAlterado={recarregarFotos}
+                  />
+                )}
                 <div className="linha-botoes">
                   <button type="button" className="btn secundario" onClick={() => duplicar(i)}>
                     Duplicar linha
