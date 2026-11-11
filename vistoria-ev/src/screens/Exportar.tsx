@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getConfig } from '../config';
 import { calcularPendencias, carregarDados, gerarZip, type Pendencias } from '../lib/export';
+import { marcarExportada } from '../db/repo';
 import { mensagemErro } from '../lib/erros';
 import { prefixo } from '../lib/naming';
 import { resumoItens, mapaSlots } from '../lib/slots';
@@ -11,6 +12,8 @@ import type { PropsAba } from './Vistoria';
 
 interface Resultado {
   arquivo: File;
+  /** Só o ZIP é backup: só ele marca a vistoria como exportada (depois de sair do aparelho). */
+  ehBackup?: boolean;
 }
 
 export function Exportar({ v }: PropsAba) {
@@ -43,7 +46,7 @@ export function Exportar({ v }: PropsAba) {
     setRes(null);
     try {
       const { blob, nome } = await gerarZip(v, setProgresso);
-      setRes({ arquivo: new File([blob], nome, { type: 'application/zip' }) });
+      setRes({ arquivo: new File([blob], nome, { type: 'application/zip' }), ehBackup: true });
     } catch (e) {
       toast(mensagemErro(e));
     } finally {
@@ -72,6 +75,17 @@ export function Exportar({ v }: PropsAba) {
       toast(mensagemErro(e));
     } finally {
       setProgresso('');
+    }
+  };
+
+  /** Compartilha/baixa; se for o ZIP e deu certo, marca a vistoria como exportada. */
+  const enviar = async (acao: () => Promise<boolean>, compartilhando: boolean) => {
+    if (!res) return;
+    try {
+      const ok = await acao();
+      if (ok && res.ehBackup) await marcarExportada(v.id);
+    } catch (e) {
+      toast(`${mensagemErro(e)}${compartilhando ? ' — tente “Baixar”.' : ''}`);
     }
   };
 
@@ -155,18 +169,16 @@ export function Exportar({ v }: PropsAba) {
               <button
                 type="button"
                 className="btn primario"
-                onClick={async () => {
-                  try {
-                    await compartilhar(res.arquivo, res.arquivo.name);
-                  } catch (e) {
-                    toast(`${mensagemErro(e)} — use “Baixar”.`);
-                  }
-                }}
+                onClick={() => enviar(() => compartilhar(res.arquivo, res.arquivo.name), true)}
               >
                 Compartilhar
               </button>
             )}
-            <button type="button" className="btn secundario" onClick={() => baixar(res.arquivo, res.arquivo.name)}>
+            <button
+              type="button"
+              className="btn secundario"
+              onClick={() => enviar(() => baixar(res.arquivo, res.arquivo.name), false)}
+            >
               Baixar
             </button>
           </div>

@@ -38,7 +38,7 @@ const dataBR = (iso?: string) =>
   iso && /^\d{4}-\d{2}-\d{2}$/.test(iso) ? iso.split('-').reverse().join('/') : iso || '-';
 
 /** Reduz a foto para o PDF (o original fica no ZIP). */
-async function reduzirFoto(dados: ArrayBuffer, max = 1400, q = 0.8): Promise<{ bytes: Uint8Array; w: number; h: number }> {
+async function reduzirFoto(dados: ArrayBuffer, max = 1200, q = 0.75): Promise<{ bytes: Uint8Array; w: number; h: number }> {
   const bmp = await createImageBitmap(new Blob([dados], { type: 'image/jpeg' }));
   const k = Math.min(1, max / Math.max(bmp.width, bmp.height));
   const c = document.createElement('canvas');

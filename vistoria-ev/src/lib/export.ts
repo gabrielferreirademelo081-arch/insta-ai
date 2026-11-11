@@ -1,7 +1,7 @@
 import JSZip from 'jszip';
 import { getConfig } from '../config';
 import type { CampoDef, TipoConfig } from '../config/types';
-import { listarAntenas, listarFotos, listarSlots, marcarExportada, obterDadosFoto } from '../db/repo';
+import { listarAntenas, listarFotos, listarSlots, obterDadosFoto } from '../db/repo';
 import type { Antena, Foto, SlotChecklist, Vistoria } from '../db/schema';
 import { avisosAntena, errosRegistro } from './validacao';
 import { formatarDataHora } from './fotos';
@@ -187,7 +187,7 @@ export function gerarTxt(d: DadosVistoria, nomes: FotoExport[], pend: Pendencias
         let st = ROTULO_STATUS[s.status];
         if (s.nFotos) st += ` (${s.nFotos} foto${s.nFotos > 1 ? 's' : ''})`;
         L.push(linhaPontilhada(indent + label, st));
-        if (s.slot?.justificativa.trim()) L.push(`${indent}   Justificativa: ${s.slot.justificativa.trim()}`);
+        if ((s.status === 'NAO_TEM' || s.status === 'OUTRO') && s.slot?.justificativa.trim()) L.push(`${indent}   Justificativa: ${s.slot.justificativa.trim()}`);
       };
       if (!r.temSub) linhaSlot(r.slots[0], '', cab);
       else {
@@ -362,6 +362,5 @@ export async function gerarZip(
   onProgresso?.('Compactando…');
   // JPEG já é comprimido: STORE é bem mais rápido no celular.
   const blob = await zip.generateAsync({ type: 'blob', compression: 'STORE', mimeType: 'application/zip' });
-  await marcarExportada(v.id);
   return { blob, nome: `${raiz}.zip`, pendencias: pend };
 }

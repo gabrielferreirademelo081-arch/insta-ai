@@ -62,12 +62,14 @@ function Visualizador({
 
   useEffect(() => {
     let u = '';
+    let aberto = true;
     obterDadosFoto(foto.id).then((d) => {
-      if (!d) return;
+      if (!d || !aberto) return; // fechou antes de carregar: não cria URL (evita vazar memória)
       u = URL.createObjectURL(new Blob([d], { type: 'image/jpeg' }));
       setUrl(u);
     });
     return () => {
+      aberto = false;
       if (u) URL.revokeObjectURL(u);
     };
   }, [foto.id]);

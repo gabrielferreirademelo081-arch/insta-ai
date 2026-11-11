@@ -50,24 +50,25 @@ export async function salvarVistoria(v: Vistoria): Promise<void> {
   await (await getDB()).put('vistorias', { ...v, updatedAt: Date.now() });
 }
 
+/**
+ * Lê e grava a vistoria na MESMA transação. Com get e put separados, dois salvamentos ao mesmo
+ * tempo (ex.: campo do registro + antena ao trocar de aba) podiam gravar uma cópia velha por cima.
+ */
+async function alterarVistoria(id: string, mudar: (v: Vistoria) => Vistoria): Promise<void> {
+  const db = await getDB();
+  const tx = db.transaction('vistorias', 'readwrite');
+  const v = await tx.store.get(id);
+  if (v) await tx.store.put(mudar(v));
+  await tx.done;
+}
+
 /** Grava só os campos, sem sobrescrever outros dados (ex.: data da última exportação). */
-export async function salvarCampos(id: string, campos: Campos): Promise<void> {
-  const db = await getDB();
-  const v = await db.get('vistorias', id);
-  if (v) await db.put('vistorias', { ...v, campos, updatedAt: Date.now() });
-}
+export const salvarCampos = (id: string, campos: Campos) =>
+  alterarVistoria(id, (v) => ({ ...v, campos, updatedAt: Date.now() }));
 
-export async function marcarExportada(id: string): Promise<void> {
-  const db = await getDB();
-  const v = await db.get('vistorias', id);
-  if (v) await db.put('vistorias', { ...v, ultimaExportacao: Date.now() });
-}
+export const marcarExportada = (id: string) => alterarVistoria(id, (v) => ({ ...v, ultimaExportacao: Date.now() }));
 
-async function tocar(vistoriaId: string): Promise<void> {
-  const db = await getDB();
-  const v = await db.get('vistorias', vistoriaId);
-  if (v) await db.put('vistorias', { ...v, updatedAt: Date.now() });
-}
+const tocar = (vistoriaId: string) => alterarVistoria(vistoriaId, (v) => ({ ...v, updatedAt: Date.now() }));
 
 /** Copia registro e antenas (não copia fotos nem checklist: são de outro site). */
 export async function duplicarVistoria(id: string): Promise<Vistoria> {

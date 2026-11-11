@@ -24,7 +24,7 @@ export function AlertaQualidade({ v, foto, onResolvido }: Props) {
     if (!arqs.length) return;
     setOcupado(true);
     try {
-      const [nova] = await salvarArquivos(v, foto.itemId, arqs.slice(0, 1), foto.antena);
+      const [nova] = await salvarArquivos(v, foto.itemId, arqs.slice(0, 1), foto.antena, undefined, foto.ordem);
       await excluirFoto(foto.id);
       liberarThumb(foto.id);
       toast(nova.alerta ? 'Foto refeita, mas ainda parece ruim' : 'Foto refeita');

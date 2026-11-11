@@ -3,6 +3,7 @@ import { adicionarFoto, listarFotos } from '../db/repo';
 import type { Foto, Vistoria } from '../db/schema';
 import { copiarParaGaleria, galeriaDisponivel } from './galeria';
 import { posicaoRapida } from './geo';
+import { limparFotosTemporariasCamera } from './share';
 import { toast } from './toast';
 import { processarFoto } from './image';
 import { nomeFoto, prefixo, rotuloAntena } from './naming';
@@ -21,6 +22,8 @@ export async function salvarArquivos(
   arquivos: FileList | File[],
   antena?: string,
   onProgresso?: (i: number, total: number) => void,
+  /** Posição fixa (ex.: "Refazer" mantém o lugar da foto trocada). */
+  ordem?: number,
 ): Promise<Foto[]> {
   const cfg = getConfig(v.tipo);
   const lista = Array.from(arquivos);
@@ -55,6 +58,7 @@ export async function salvarArquivos(
       alerta,
       arquivo,
       thumb,
+      ordem: ordem !== undefined ? ordem + i * 1e-6 : undefined,
     });
     salvas.push(foto);
     // Cópia de segurança na galeria: falha aqui não perde a foto (ela já está salva no app).
@@ -63,6 +67,7 @@ export async function salvarArquivos(
         avisarFalhaGaleria(String((e as Error)?.message ?? e)),
       );
   }
+  void limparFotosTemporariasCamera(); // originais da câmera no Android (o app já guardou a sua cópia)
   return salvas;
 }
 

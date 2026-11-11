@@ -37,10 +37,9 @@ export function SlotSecao(p: Props) {
   const mudarEstado = async (novo: EstadoSlot | null) => {
     flush();
     setEstado(novo);
-    const j = novo ? just : '';
-    if (!novo) setJust('');
+    // O texto digitado fica guardado mesmo ao desmarcar: um toque sem querer não apaga nada.
     try {
-      await salvarSlot(v.id, slotKey, novo, j);
+      await salvarSlot(v.id, slotKey, novo, just);
       p.onAlterado();
     } catch (e) {
       toast(mensagemErro(e));

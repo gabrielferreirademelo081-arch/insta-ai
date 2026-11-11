@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
+import { limparFotosTemporariasCamera } from './lib/share';
 import { pedirPersistencia } from './lib/storage';
 import './styles.css';
 
@@ -11,6 +12,7 @@ if (import.meta.env.MODE === 'artifact') {
   import('virtual:pwa-register').then((m) => m.registerSW({ immediate: true }));
 }
 pedirPersistencia();
+void limparFotosTemporariasCamera();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

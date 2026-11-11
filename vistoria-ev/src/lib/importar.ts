@@ -118,9 +118,9 @@ export async function importarBackup(
     const estado =
       s.estadoSalvo !== undefined
         ? s.estadoSalvo
-        : s.estado === 'NAO_TEM'
+        : s.estado === 'NAO_TEM' || s.estado === 'SEM_JUSTIFICATIVA' // sem justificativa: o mais comum é "não tem"
           ? 'NAO_TEM'
-          : s.estado === 'OUTRO' || s.estado === 'SEM_JUSTIFICATIVA'
+          : s.estado === 'OUTRO'
             ? 'OUTRO'
             : null;
     addSlot(s.slot, estado, s.justificativa ?? '');

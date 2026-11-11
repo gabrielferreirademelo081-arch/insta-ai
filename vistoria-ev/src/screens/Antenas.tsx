@@ -21,10 +21,11 @@ export function Antenas({ v, setCampo }: PropsAba) {
   const [lista, setLista] = useState<Antena[] | null>(null);
   const [fotos43, setFotos43] = useState<Foto[]>([]);
   const [aberta, setAberta] = useState<string | null>(null);
-  const { agendar, flush } = useAutosave<Antena>(salvarAntena);
   const itemAntenas = cfg.checklist.find((i) => i.vinculaAntena)?.num;
-  /** Nº da antena quando o campo ganhou foco: ao sair, as fotos vinculadas acompanham a troca. */
-  const numeroAoFocar = useRef<{ id: string; numero: string } | null>(null);
+  const listaRef = useRef<Antena[]>([]);
+  listaRef.current = lista ?? [];
+  /** Último nº (não vazio) gravado de cada antena: base para levar as fotos junto quando ela é renumerada. */
+  const numeroGravado = useRef(new Map<string, string>());
 
   const recarregarFotos = useCallback(
     () =>
@@ -34,9 +35,48 @@ export function Antenas({ v, setCampo }: PropsAba) {
     [v.id],
   );
 
+  /**
+   * Salva a antena e, se o nº mudou, leva as fotos do nº antigo para o novo.
+   * Roda no salvamento automático (não no "sair do campo"), então funciona mesmo trocando de aba direto.
+   */
+  const salvarComFotos = useCallback(
+    async (a: Antena) => {
+      await salvarAntena(a);
+      const novo = (a.campos.numero ?? '').trim();
+      const antes = numeroGravado.current.get(a.id) ?? '';
+      if (!novo) return; // apagou o nº para digitar outro: espera o definitivo
+      if (!antes || mesmaAntena(antes, novo)) {
+        numeroGravado.current.set(a.id, novo);
+        return;
+      }
+      const outras = listaRef.current.filter((x) => x.id !== a.id);
+      if (outras.some((x) => mesmaAntena(x.campos.numero, antes))) {
+        // O nº antigo ainda é de outra antena: as fotos são dela.
+        numeroGravado.current.set(a.id, novo);
+        return;
+      }
+      if (outras.some((x) => mesmaAntena(x.campos.numero, novo))) {
+        toast(`O nº ${novo} já é de outra antena. As fotos continuam com o nº ${antes} até você corrigir.`);
+        return;
+      }
+      const afetadas = (await listarFotos(a.vistoriaId)).filter((f) => mesmaAntena(f.antena, antes));
+      for (const f of afetadas) await atualizarFoto({ ...f, antena: novo });
+      numeroGravado.current.set(a.id, novo);
+      if (afetadas.length) {
+        toast(`${afetadas.length} foto(s) passaram da antena ${antes} para a ${novo}`);
+        recarregarFotos();
+      }
+    },
+    [recarregarFotos],
+  );
+  const { agendar, flush } = useAutosave<Antena>(salvarComFotos);
+
   useEffect(() => {
     listarAntenas(v.id)
-      .then(setLista)
+      .then((l) => {
+        for (const a of l) if (a.campos.numero?.trim()) numeroGravado.current.set(a.id, a.campos.numero.trim());
+        setLista(l);
+      })
       .catch((e) => toast(mensagemErro(e)));
     recarregarFotos();
   }, [v.id, recarregarFotos]);
@@ -48,6 +88,10 @@ export function Antenas({ v, setCampo }: PropsAba) {
   const gravarLista = async (nova: Antena[], abrir?: string) => {
     flush();
     const ord = reordenar(nova);
+    for (const a of ord) {
+      const n = a.campos.numero?.trim();
+      if (n && !numeroGravado.current.has(a.id)) numeroGravado.current.set(a.id, n);
+    }
     setLista(ord);
     if (abrir) setAberta(abrir);
     try {
@@ -55,24 +99,6 @@ export function Antenas({ v, setCampo }: PropsAba) {
     } catch (e) {
       toast(mensagemErro(e));
     }
-  };
-
-  /** Renumerou a antena: leva junto as fotos que tinham o nº antigo (se nenhuma outra antena usa esse nº). */
-  const aoSairDoNumero = async (a: Antena) => {
-    const antes = numeroAoFocar.current;
-    numeroAoFocar.current = null;
-    const novo = (a.campos.numero ?? '').trim();
-    if (!antes || antes.id !== a.id || !antes.numero || !novo || mesmaAntena(antes.numero, novo)) return;
-    if (lista.some((x) => x.id !== a.id && mesmaAntena(x.campos.numero, antes.numero))) return;
-    const afetadas = fotos43.filter((f) => mesmaAntena(f.antena, antes.numero));
-    if (!afetadas.length) return;
-    try {
-      for (const f of afetadas) await atualizarFoto({ ...f, antena: novo });
-      toast(`${afetadas.length} foto(s) passaram da antena ${antes.numero} para a ${novo}`);
-    } catch (e) {
-      toast(mensagemErro(e));
-    }
-    recarregarFotos();
   };
 
   const mudar = (id: string, key: string, valor: string) => {
@@ -169,8 +195,6 @@ export function Antenas({ v, setCampo }: PropsAba) {
                     aviso={avisos[c.key] ?? null}
                     onChange={(x) => mudar(a.id, c.key, x)}
                     onAnterior={i > 0 && c.key !== 'numero' ? () => mudar(a.id, c.key, lista[i - 1].campos[c.key] ?? '') : undefined}
-                    onFocus={c.key === 'numero' ? () => (numeroAoFocar.current = { id: a.id, numero: a.campos.numero ?? '' }) : undefined}
-                    onBlur={c.key === 'numero' ? () => aoSairDoNumero(lista[i]) : undefined}
                   />
                 ))}
                 {itemAntenas !== undefined && (
