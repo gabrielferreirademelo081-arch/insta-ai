@@ -353,6 +353,11 @@ export async function gerarZip(
   pasta.file('registro.json', gerarJson(d, nomes, pend), txt);
   pasta.file('registro.txt', gerarTxt(d, nomes, pend), txt);
   pasta.file('antenas.csv', gerarCsv(d), txt);
+  // Import dinâmico: relatorio.ts importa este arquivo, e o jsPDF só carrega quando precisa.
+  const { gerarXlsx } = await import('./planilha');
+  pasta.file('antenas.xlsx', await gerarXlsx(d));
+  const { montarPdf } = await import('./relatorio');
+  pasta.file('relatorio.pdf', await montarPdf(d, nomes, pend, onProgresso));
 
   onProgresso?.('Compactando…');
   // JPEG já é comprimido: STORE é bem mais rápido no celular.

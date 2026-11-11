@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { getConfig } from '../config';
 import { calcularPendencias, carregarDados, gerarZip, type Pendencias } from '../lib/export';
 import { mensagemErro } from '../lib/erros';
-import { gerarPdf } from '../lib/relatorio';
+import { prefixo } from '../lib/naming';
 import { resumoItens, mapaSlots } from '../lib/slots';
 import { baixar, compartilhar, podeCompartilharArquivo } from '../lib/share';
 import { estimativa, formatarBytes } from '../lib/storage';
@@ -65,8 +65,28 @@ export function Exportar({ v }: PropsAba) {
   const gerarRelatorio = async () => {
     setRes(null);
     try {
+      const { gerarPdf } = await import('../lib/relatorio');
       const { blob, nome } = await gerarPdf(v, setProgresso);
       setRes({ arquivo: new File([blob], nome, { type: 'application/pdf' }) });
+    } catch (e) {
+      toast(mensagemErro(e));
+    } finally {
+      setProgresso('');
+    }
+  };
+
+  const gerarPlanilha = async () => {
+    setRes(null);
+    try {
+      setProgresso('Gerando planilha…');
+      const { gerarXlsx } = await import('../lib/planilha');
+      const d = await carregarDados(v);
+      const nome = `${prefixo(d.cfg, v.campos)}_antenas.xlsx`;
+      setRes({
+        arquivo: new File([await gerarXlsx(d)], nome, {
+          type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        }),
+      });
     } catch (e) {
       toast(mensagemErro(e));
     } finally {
@@ -121,6 +141,9 @@ export function Exportar({ v }: PropsAba) {
       <button type="button" className="btn secundario bloco grande" disabled={!!progresso || !pend} onClick={gerarRelatorio}>
         📄 Gerar relatório PDF
       </button>
+      <button type="button" className="btn secundario bloco grande" disabled={!!progresso} onClick={gerarPlanilha}>
+        📊 Planilha de antenas (Excel)
+      </button>
 
       {res && (
         <section className="cartao">
@@ -152,7 +175,7 @@ export function Exportar({ v }: PropsAba) {
       )}
 
       <p className="pequeno claro">
-        O ZIP contém as pastas {cfg.pastas.map((p) => p.nome).join(', ')}, registro.txt, registro.json e antenas.csv.
+        O ZIP contém as pastas {cfg.pastas.map((p) => p.nome).join(', ')}, relatorio.pdf (relatório fotográfico), antenas.xlsx (planilha formatada), registro.txt, registro.json e antenas.csv.
         {espaco && ` Espaço usado no aparelho: ${espaco}.`}
       </p>
     </>
