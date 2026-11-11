@@ -33,7 +33,7 @@ Os limites da checagem de foto (`qualidadeFoto` em `vistoria-ev/src/config/ev.ts
 
 ## Próximos passos
 1. **Publicar na Vercel**: importar o repo, Root Directory = `vistoria-ev`, preset Vite. Abrir no Safari do iPhone e instalar.
-2. ~~Relatório PDF~~ feito (versão genérica, `lib/relatorio.ts`); falta o modelo da KK. **APK Android**: `.github/workflows/apk.yml` gera `app-debug.apk` (artefato do Actions); ainda não testado em aparelho real.
+2. ~~Relatório PDF~~ e ~~planilha xlsx~~ feitos (layout próprio); falta ajustar ao modelo da KK. **APK Android**: `.github/workflows/apk.yml` gera `app-debug.apk` (artefato do Actions) a cada push; cópia na galeria e câmera ainda não testadas em aparelho real.
 3. Tabela de antenas no formato da planilha da KK (precisa do modelo).
 4. Depois, se houver demanda: configs de FD e rooftop (novo arquivo em `vistoria-ev/src/config/`), rascunho de silhueta a partir da tabela de antenas.
 

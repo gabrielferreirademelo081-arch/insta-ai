@@ -41,9 +41,11 @@ Abra uma vez com internet; depois funciona em modo avião.
    Cada foto guarda data/hora e GPS do aparelho e, por padrão, sai carimbada com obra, item, data e GPS (desligue em *Registro → Fotos*).
    Itens 3/4 (faces), 33 (visadas), 38 e 43 abrem direto o detalhe.
 3. *Patologias*: padrão “não encontrada”. Encontrada exige foto.
-4. *Antenas*: uma linha por antena; “Duplicar linha” e “↑ anterior” por campo. No item 43, informe o nº da antena antes de fotografar.
+4. *Antenas*: uma linha por antena; “Duplicar linha” e “↑ anterior” por campo. Dá para **fotografar a antena direto no cadastro** (a foto vai para o item 43 com o nº da antena). No item 43, informe o nº da antena antes de fotografar.
 5. *Pranchas*: croqui, silhueta (frente/verso), tabela de emendas.
-6. *Exportar*: lista pendências → **Gerar ZIP** → Compartilhar (Drive, WhatsApp, e-mail) ou Baixar.
+6. *Exportar*: lista pendências → **Gerar ZIP** → Compartilhar (Drive, WhatsApp, e-mail) ou Baixar. Também gera só o **relatório PDF** ou só a **planilha de antenas (Excel)**.
+
+**App Android:** cada foto também é copiada para a galeria em *Imagens/Vistoria EV/{OBRA}_{SITE}* (desligue em *Registro → Fotos*). A cópia continua lá mesmo se o app for desinstalado.
 
 **Exporte no fim de cada site.** Os dados ficam só no aparelho. O app avisa quando uma vistoria tem alterações sem exportar há mais de 24 h.
 
@@ -60,7 +62,9 @@ Serve para trocar de celular ou recuperar dados apagados. Se a vistoria já exis
     ├── GERAIS/ FACES/ VISADAS/ ANTENAS/ TORRE/ PATOLOGIAS/ PRANCHAS/
     ├── registro.txt    (legível: dados, checklist, patologias, antenas, pendências)
     ├── registro.json   (completo, para integração futura)
-    └── antenas.csv     (";" + BOM, abre direto no Excel)
+    ├── relatorio.pdf   (relatório fotográfico: capa, resumo, fotos legendadas, tabela de antenas)
+    ├── antenas.xlsx    (planilha de antenas formatada)
+    └── antenas.csv     (";" + BOM, para importar em outros sistemas)
 ```
 
 Nome das fotos: `{OBRA}_{ID-SITE}_{ITEM}_{DESCRICAO}_{SEQ}.jpg`, ex.: `126-843_SPSAO123_33_VISADA-030_001.jpg`.
