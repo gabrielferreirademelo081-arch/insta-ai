@@ -81,6 +81,8 @@ export interface TipoConfig {
   antenaExtras: CampoDef[];
   /** Campo do registro (Sim/Não) que liga o carimbo nas fotos. Vazio = Sim. */
   campoCarimbo?: string;
+  /** Campo do registro (Sim/Não): salvar cópia das fotos na galeria (só app Android). Vazio = Sim. */
+  campoGaleria?: string;
   /** A altura da antena não pode passar a altura da EV. */
   limiteAlturaAntena?: { campoAntena: string; campoRegistro: string };
   /** Limites da checagem automática de foto (hipótese inicial; ajuste com fotos reais). */

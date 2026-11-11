@@ -87,6 +87,7 @@ export const evConfig: TipoConfig = {
   campoIdSite: 'idSite',
   bloquearExportComPendentes: false,
   campoCarimbo: 'carimboFotos',
+  campoGaleria: 'galeriaFotos',
   limiteAlturaAntena: { campoAntena: 'alturaCentro', campoRegistro: 'alturaEv' },
   // Brilho médio 0–255 e variância do Laplaciano. Valores iniciais: calibrar em campo.
   qualidadeFoto: { brilhoMinimo: 45, nitidezMinima: 40 },
@@ -186,6 +187,13 @@ export const evConfig: TipoConfig = {
         {
           key: 'carimboFotos',
           label: 'Carimbar obra, item, data e GPS nas fotos',
+          tipo: 'opcoes',
+          opcoes: ['Sim', 'Não'],
+          padrao: 'Sim',
+        },
+        {
+          key: 'galeriaFotos',
+          label: 'Salvar cópia das fotos na galeria (app Android)',
           tipo: 'opcoes',
           opcoes: ['Sim', 'Não'],
           padrao: 'Sim',

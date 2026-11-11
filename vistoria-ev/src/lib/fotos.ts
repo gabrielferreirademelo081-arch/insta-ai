@@ -1,7 +1,9 @@
 import { getConfig } from '../config';
 import { adicionarFoto, listarFotos } from '../db/repo';
 import type { Foto, Vistoria } from '../db/schema';
+import { copiarParaGaleria, galeriaDisponivel } from './galeria';
 import { posicaoRapida } from './geo';
+import { toast } from './toast';
 import { processarFoto } from './image';
 import { nomeFoto, prefixo, rotuloAntena } from './naming';
 import { partesNome, tituloSlot } from './slots';
@@ -27,6 +29,7 @@ export async function salvarArquivos(
     (f) => f.itemId === slotKey && (f.antena ?? '') === (antena ?? ''),
   ).length;
   const carimbar = !!cfg.campoCarimbo && v.campos[cfg.campoCarimbo] !== 'Não';
+  const naGaleria = galeriaDisponivel() && !!cfg.campoGaleria && v.campos[cfg.campoGaleria] !== 'Não';
   const salvas: Foto[] = [];
   for (let i = 0; i < lista.length; i++) {
     onProgresso?.(i + 1, lista.length);
@@ -42,21 +45,33 @@ export async function salvarArquivos(
       : undefined;
     const { arquivo, thumb, alerta } = await processarFoto(lista[i], { carimbo, limites: cfg.qualidadeFoto });
     const { codigo, desc } = partesNome(cfg, v.campos, slotKey, antena);
-    salvas.push(
-      await adicionarFoto({
-        vistoriaId: v.id,
-        itemId: slotKey,
-        antena: antena?.trim() || undefined,
-        nome: nomeFoto(prefixo(cfg, v.campos), codigo, desc, existentes + i + 1),
-        capturadaEm,
-        gps,
-        alerta,
-        arquivo,
-        thumb,
-      }),
-    );
+    const foto = await adicionarFoto({
+      vistoriaId: v.id,
+      itemId: slotKey,
+      antena: antena?.trim() || undefined,
+      nome: nomeFoto(prefixo(cfg, v.campos), codigo, desc, existentes + i + 1),
+      capturadaEm,
+      gps,
+      alerta,
+      arquivo,
+      thumb,
+    });
+    salvas.push(foto);
+    // Cópia de segurança na galeria: falha aqui não perde a foto (ela já está salva no app).
+    if (naGaleria)
+      await copiarParaGaleria(arquivo, foto.nome, prefixo(cfg, v.campos)).catch((e) =>
+        avisarFalhaGaleria(String((e as Error)?.message ?? e)),
+      );
   }
   return salvas;
+}
+
+let ultimoAvisoGaleria = 0;
+/** Avisa no máximo uma vez por minuto, para não encher a tela durante uma sequência de fotos. */
+function avisarFalhaGaleria(msg: string) {
+  if (Date.now() - ultimoAvisoGaleria < 60_000) return;
+  ultimoAvisoGaleria = Date.now();
+  toast(`Foto salva no app, mas não na galeria (${msg}).`);
 }
 
 const cacheThumb = new Map<string, string>();
