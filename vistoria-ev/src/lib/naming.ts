@@ -12,9 +12,12 @@ export function slug(s: string): string {
     .replace(/^-+|-+$/g, '');
 }
 
+/** Até 30 caracteres por parte: com nome longo, o caminho no ZIP passava de 260 e o Windows não extraía. */
+const curto = (s: string) => slug(s).slice(0, 30).replace(/-+$/, '');
+
 /** {OBRA}_{ID-SITE} */
 export function prefixo(cfg: TipoConfig, campos: Campos): string {
-  return `${slug(campos[cfg.campoObra]) || 'SEM-OBRA'}_${slug(campos[cfg.campoIdSite]) || 'SEM-ID'}`;
+  return `${curto(campos[cfg.campoObra]) || 'SEM-OBRA'}_${curto(campos[cfg.campoIdSite]) || 'SEM-ID'}`;
 }
 
 /** {OBRA}_{ID-SITE}_{ITEM}_{DESCRICAO}_{SEQ:3d}.jpg */

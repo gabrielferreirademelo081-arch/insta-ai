@@ -69,7 +69,17 @@ export function Antenas({ v, setCampo }: PropsAba) {
     },
     [recarregarFotos],
   );
-  const { agendar, flush } = useAutosave<Antena>(salvarComFotos);
+  /** Um salvamento por vez: duas renumerações seguidas não dividem as fotos entre dois números. */
+  const fila = useRef<Promise<void>>(Promise.resolve());
+  const salvarEmFila = useCallback(
+    (a: Antena) => {
+      const p = fila.current.then(() => salvarComFotos(a));
+      fila.current = p.catch(() => undefined);
+      return p;
+    },
+    [salvarComFotos],
+  );
+  const { agendar, flush } = useAutosave<Antena>(salvarEmFila);
 
   useEffect(() => {
     listarAntenas(v.id)
@@ -135,9 +145,23 @@ export function Antenas({ v, setCampo }: PropsAba) {
 
   const excluir = async (i: number) => {
     const a = lista[i];
-    if (!confirm(`Excluir a antena ${a.campos.numero || i + 1}?`)) return;
+    const num = a.campos.numero?.trim() ?? '';
+    // Fotos só desta antena (se outra antena tem o mesmo nº, as fotos ficam com ela).
+    const minhas =
+      num && !lista.some((x) => x.id !== a.id && mesmaAntena(x.campos.numero, num))
+        ? fotos43.filter((f) => mesmaAntena(f.antena, num))
+        : [];
+    const aviso = minhas.length
+      ? `\n\nAs ${minhas.length} foto(s) dela continuam no item ${itemAntenas ?? 43}, sem nº de antena.`
+      : '';
+    if (!confirm(`Excluir a antena ${num || i + 1}?${aviso}`)) return;
     flush();
     try {
+      await fila.current;
+      // Desvincula: sem isso, a próxima antena criada com o mesmo nº herdaria as fotos.
+      for (const f of minhas) await atualizarFoto({ ...f, antena: undefined });
+      numeroGravado.current.delete(a.id);
+      if (minhas.length) recarregarFotos();
       await excluirAntena(a.id);
       gravarLista(lista.filter((x) => x.id !== a.id));
     } catch (e) {

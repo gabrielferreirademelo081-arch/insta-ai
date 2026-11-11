@@ -67,6 +67,7 @@ export function Exportar({ v }: PropsAba) {
 
   const gerarRelatorio = async () => {
     setRes(null);
+    setProgresso('Gerando relatório…');
     try {
       const { gerarPdf } = await import('../lib/relatorio');
       const { blob, nome } = await gerarPdf(v, setProgresso);

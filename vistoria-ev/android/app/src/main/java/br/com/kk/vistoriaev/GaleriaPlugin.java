@@ -71,6 +71,10 @@ public class GaleriaPlugin extends Plugin {
                 try (OutputStream os = resolver.openOutputStream(uri)) {
                     if (os == null) throw new Exception("não abriu o arquivo de destino");
                     os.write(bytes);
+                } catch (Exception e) {
+                    // Não deixa um registro "pendente" vazio na galeria.
+                    resolver.delete(uri, null, null);
+                    throw e;
                 }
                 cv.clear();
                 cv.put(MediaStore.Images.Media.IS_PENDING, 0);
@@ -79,7 +83,10 @@ public class GaleriaPlugin extends Plugin {
             } else {
                 File dir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), pasta);
                 if (!dir.exists() && !dir.mkdirs()) throw new Exception("não criou a pasta " + dir);
+                // Nome repetido: não sobrescreve a cópia de outra foto (o MediaStore do Android 10+ já faz isso sozinho).
                 File f = new File(dir, nome);
+                String base = nome.replaceAll("\\.jpe?g$", "");
+                for (int n = 2; f.exists(); n++) f = new File(dir, base + "_" + n + ".jpg");
                 try (OutputStream os = new FileOutputStream(f)) {
                     os.write(bytes);
                 }

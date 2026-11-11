@@ -30,14 +30,31 @@ const PASTA_EXPORT = 'exportacoes';
  * do Capacitor chega a ~300 MB de memória e derruba o app em celular médio.
  */
 async function gravarNoCache(arq: Blob, nome: string): Promise<string> {
-  // Apaga exportações anteriores (senão o cache cresce a cada exportação).
-  await Filesystem.rmdir({ path: PASTA_EXPORT, directory: Directory.Cache, recursive: true }).catch(() => undefined);
-  await Filesystem.mkdir({ path: PASTA_EXPORT, directory: Directory.Cache, recursive: true }).catch(() => undefined);
-  const path = `${PASTA_EXPORT}/${nome}`;
+  await limparExportacoesAntigas();
+  // Pasta própria por envio: outro app (Drive, WhatsApp) pode ainda estar lendo o envio anterior.
+  const dir = `${PASTA_EXPORT}/${Date.now()}`;
+  await Filesystem.mkdir({ path: dir, directory: Directory.Cache, recursive: true }).catch(() => undefined);
+  const path = `${dir}/${nome}`;
   await Filesystem.writeFile({ path, data: '', directory: Directory.Cache });
   for (let i = 0; i < arq.size; i += PEDACO)
     await Filesystem.appendFile({ path, data: await paraBase64(arq.slice(i, i + PEDACO)), directory: Directory.Cache });
   return (await Filesystem.getUri({ path, directory: Directory.Cache })).uri;
+}
+
+/** Apaga só envios com mais de 1 h (o cache não cresce sem fim, e nada em uso é apagado). */
+async function limparExportacoesAntigas(): Promise<void> {
+  try {
+    const { files } = await Filesystem.readdir({ path: PASTA_EXPORT, directory: Directory.Cache });
+    for (const f of files) {
+      const criado = Number(f.name) || f.mtime || 0;
+      if (Date.now() - criado > 3600_000)
+        await Filesystem.rmdir({ path: `${PASTA_EXPORT}/${f.name}`, directory: Directory.Cache, recursive: true }).catch(
+          () => Filesystem.deleteFile({ path: `${PASTA_EXPORT}/${f.name}`, directory: Directory.Cache }).catch(() => undefined),
+        );
+    }
+  } catch {
+    // Pasta ainda não existe.
+  }
 }
 
 /** No app Android a WebView não tem Web Share nem download por <a>: grava no cache e abre a folha de compartilhar. */
@@ -87,8 +104,9 @@ export async function limparFotosTemporariasCamera(): Promise<void> {
   if (Capacitor.getPlatform() !== 'android') return;
   try {
     const { files } = await Filesystem.readdir({ path: 'Pictures', directory: Directory.External });
+    // Só originais com mais de 10 min: uma foto recém-tirada pode ainda estar sendo lida pelo app.
     for (const f of files)
-      if (f.type === 'file' && /^JPEG_.*\.jpg$/i.test(f.name))
+      if (f.type === 'file' && /^JPEG_.*\.jpg$/i.test(f.name) && Date.now() - (f.mtime || 0) > 10 * 60_000)
         await Filesystem.deleteFile({ path: `Pictures/${f.name}`, directory: Directory.External }).catch(() => undefined);
   } catch {
     // Pasta ainda não existe (nenhuma foto tirada): nada a limpar.

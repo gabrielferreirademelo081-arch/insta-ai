@@ -6,7 +6,7 @@ import { posicaoRapida } from './geo';
 import { limparFotosTemporariasCamera } from './share';
 import { toast } from './toast';
 import { processarFoto } from './image';
-import { nomeFoto, prefixo, rotuloAntena } from './naming';
+import { mesmaAntena, nomeFoto, prefixo, rotuloAntena } from './naming';
 import { partesNome, tituloSlot } from './slots';
 
 export function formatarDataHora(ts: number): string {
@@ -29,7 +29,7 @@ export async function salvarArquivos(
   const lista = Array.from(arquivos);
   const gpsPromessa = posicaoRapida(); // em paralelo com o processamento
   const existentes = (await listarFotos(v.id)).filter(
-    (f) => f.itemId === slotKey && (f.antena ?? '') === (antena ?? ''),
+    (f) => f.itemId === slotKey && (antena?.trim() ? mesmaAntena(f.antena, antena) : !f.antena),
   ).length;
   const carimbar = !!cfg.campoCarimbo && v.campos[cfg.campoCarimbo] !== 'Não';
   const naGaleria = galeriaDisponivel() && !!cfg.campoGaleria && v.campos[cfg.campoGaleria] !== 'Não';

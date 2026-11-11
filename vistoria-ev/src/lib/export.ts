@@ -354,10 +354,23 @@ export async function gerarZip(
   pasta.file('registro.txt', gerarTxt(d, nomes, pend), txt);
   pasta.file('antenas.csv', gerarCsv(d), txt);
   // Import dinâmico: relatorio.ts importa este arquivo, e o jsPDF só carrega quando precisa.
-  const { gerarXlsx } = await import('./planilha');
-  pasta.file('antenas.xlsx', await gerarXlsx(d));
-  const { montarPdf } = await import('./relatorio');
-  pasta.file('relatorio.pdf', await montarPdf(d, nomes, pend, onProgresso));
+  // PDF e planilha são extras: se falharem (ex.: falta de memória), o ZIP de backup sai mesmo assim.
+  try {
+    const { gerarXlsx } = await import('./planilha');
+    pasta.file('antenas.xlsx', await gerarXlsx(d));
+  } catch (e) {
+    pasta.file('antenas_ERRO.txt', `Não foi possível gerar a planilha: ${String((e as Error)?.message ?? e)}`, txt);
+  }
+  try {
+    const { montarPdf } = await import('./relatorio');
+    pasta.file('relatorio.pdf', await montarPdf(d, nomes, pend, onProgresso));
+  } catch (e) {
+    pasta.file(
+      'relatorio_ERRO.txt',
+      `Não foi possível gerar o relatório PDF: ${String((e as Error)?.message ?? e)}\r\nGere pelo botão "Gerar relatório PDF".`,
+      txt,
+    );
+  }
 
   onProgresso?.('Compactando…');
   // JPEG já é comprimido: STORE é bem mais rápido no celular.

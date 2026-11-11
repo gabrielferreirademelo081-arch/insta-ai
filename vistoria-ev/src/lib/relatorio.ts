@@ -89,6 +89,15 @@ export async function montarPdf(
     cor(c, 'text');
   };
   const linhas = (txt: string, w: number) => doc.splitTextToSize(T(txt), w) as string[];
+  /** Corta em `max` linhas, com reticências se sobrar texto. */
+  const limitar = (txt: string, w: number, max: number) => {
+    const ls = linhas(txt, w);
+    if (ls.length <= max) return ls;
+    const corte = ls.slice(0, max);
+    corte[max - 1] = (linhas(`${corte[max - 1]}…`, w)[0] ?? '').replace(/…?$/, '…');
+    return corte;
+  };
+  const umaLinha = (txt: string, w: number) => limitar(txt, w, 1)[0] ?? '';
 
   let y = TOPO;
   const novaPagina = (orientacao: 'portrait' | 'landscape' = 'portrait') => {
@@ -116,7 +125,7 @@ export async function montarPdf(
   fonte(11, 'normal', [220, 230, 250]);
   doc.text(T(`Vistoria de ${cfg.nome}`), M, 27);
   fonte(17, 'bold', [255, 255, 255]);
-  doc.text(T(`Obra ${obra}  ·  Site ${site}`), M, 40);
+  doc.text(umaLinha(`Obra ${obra}  ·  Site ${site}`, util()), M, 40);
   y = 58;
 
   // Dados do site: grade de 2 colunas por grupo
@@ -251,14 +260,21 @@ export async function montarPdf(
       cor(BORDA, 'draw');
       doc.setLineWidth(0.2);
       doc.rect(x, yy, fotoW, fotoH);
-      const dados = await obterDadosFoto(n.foto.id);
-      if (dados) {
-        const img = await reduzirFoto(dados);
-        const k = Math.min((fotoW - 2) / img.w, (fotoH - 2) / img.h);
-        const w = img.w * k;
-        const h = img.h * k;
-        doc.addImage(img.bytes, 'JPEG', x + (fotoW - w) / 2, yy + (fotoH - h) / 2, w, h, undefined, 'NONE');
-      } else {
+      let desenhou = false;
+      try {
+        const dados = await obterDadosFoto(n.foto.id);
+        if (dados) {
+          const img = await reduzirFoto(dados);
+          const k = Math.min((fotoW - 2) / img.w, (fotoH - 2) / img.h);
+          const w = img.w * k;
+          const h = img.h * k;
+          doc.addImage(img.bytes, 'JPEG', x + (fotoW - w) / 2, yy + (fotoH - h) / 2, w, h, undefined, 'NONE');
+          desenhou = true;
+        }
+      } catch {
+        // Foto que não decodifica não derruba o relatório inteiro.
+      }
+      if (!desenhou) {
         fonte(8, 'normal', CINZA);
         doc.text('(foto indisponível)', x + fotoW / 2, yy + fotoH / 2, { align: 'center' });
       }
@@ -272,7 +288,7 @@ export async function montarPdf(
       if (obs) leg += ` — ${obs}`;
       let ly = yy + fotoH + 3.6;
       fonte(8.3, 'bold');
-      const l1 = linhas(leg, fotoW).slice(0, 2);
+      const l1 = limitar(leg, fotoW, 2);
       doc.text(l1, x, ly);
       ly += l1.length * 3.6;
       fonte(7, 'normal', CINZA);
@@ -385,7 +401,7 @@ export async function montarPdf(
     const ph = doc.internal.pageSize.getHeight();
     if (p > 1) {
       fonte(8, 'bold', AZUL);
-      doc.text(T(`Obra ${obra} · Site ${site}`), M, 11);
+      doc.text(umaLinha(`Obra ${obra} · Site ${site}`, pw / 2), M, 11);
       fonte(8, 'normal', CINZA);
       doc.text(T(`Relatório fotográfico · ${dataBR(campos.data)}`), pw - M, 11, { align: 'right' });
       cor(AZUL, 'draw');
